@@ -1,0 +1,830 @@
+{
+  "Mechanical & Production Engineering": {
+    "field_id": "FIELD_01",
+    "career_field": "Mechanical & Production Engineering",
+    "aptitude_profile": {
+      "numerical": 42.03,
+      "verbal": 53.58,
+      "spatial": 33.33,
+      "logical": 51.39
+    },
+    "riasec_profile": {
+      "R": 88.29,
+      "I": 56.23,
+      "A": 23.75,
+      "S": 20.77,
+      "E": 26.96,
+      "C": 64.47
+    }
+  },
+  "Software & Systems Engineering": {
+    "field_id": "FIELD_02",
+    "career_field": "Software & Systems Engineering",
+    "aptitude_profile": {
+      "numerical": 42.87,
+      "verbal": 58.48,
+      "spatial": 21.16,
+      "logical": 54.6
+    },
+    "riasec_profile": {
+      "R": 48.04,
+      "I": 80.75,
+      "A": 33.39,
+      "S": 30.73,
+      "E": 30.41,
+      "C": 78.74
+    }
+  },
+  "Civil & Structural Engineering": {
+    "field_id": "FIELD_03",
+    "career_field": "Civil & Structural Engineering",
+    "aptitude_profile": {
+      "numerical": 44.99,
+      "verbal": 52.99,
+      "spatial": 39.72,
+      "logical": 51.74
+    },
+    "riasec_profile": {
+      "R": 88.37,
+      "I": 60.05,
+      "A": 28.32,
+      "S": 20.61,
+      "E": 25.68,
+      "C": 64.91
+    }
+  },
+  "Electrical & Electronics Engineering": {
+    "field_id": "FIELD_04",
+    "career_field": "Electrical & Electronics Engineering",
+    "aptitude_profile": {
+      "numerical": 39.07,
+      "verbal": 52.63,
+      "spatial": 31.06,
+      "logical": 49.3
+    },
+    "riasec_profile": {
+      "R": 92.8,
+      "I": 57.04,
+      "A": 21.94,
+      "S": 18.9,
+      "E": 20.66,
+      "C": 69.67
+    }
+  },
+  "Chemical & Process Engineering": {
+    "field_id": "FIELD_05",
+    "career_field": "Chemical & Process Engineering",
+    "aptitude_profile": {
+      "numerical": 49.43,
+      "verbal": 59.65,
+      "spatial": 28.57,
+      "logical": 58.79
+    },
+    "riasec_profile": {
+      "R": 84.81,
+      "I": 64.38,
+      "A": 22.48,
+      "S": 19.67,
+      "E": 33.95,
+      "C": 66.29
+    }
+  },
+  "Aerospace & Aviation Engineering": {
+    "field_id": "FIELD_06",
+    "career_field": "Aerospace & Aviation Engineering",
+    "aptitude_profile": {
+      "numerical": 46.12,
+      "verbal": 62.94,
+      "spatial": 28.88,
+      "logical": 56.39
+    },
+    "riasec_profile": {
+      "R": 91.05,
+      "I": 73.67,
+      "A": 21.48,
+      "S": 17.29,
+      "E": 23.9,
+      "C": 67.43
+    }
+  },
+  "Computer Networking & Cybersecurity": {
+    "field_id": "FIELD_07",
+    "career_field": "Computer Networking & Cybersecurity",
+    "aptitude_profile": {
+      "numerical": 41.08,
+      "verbal": 58.84,
+      "spatial": 24.39,
+      "logical": 55.84
+    },
+    "riasec_profile": {
+      "R": 57.33,
+      "I": 67.74,
+      "A": 21.02,
+      "S": 31.28,
+      "E": 44.97,
+      "C": 82.22
+    }
+  },
+  "Data Science, AI & Analytics": {
+    "field_id": "FIELD_08",
+    "career_field": "Data Science, AI & Analytics",
+    "aptitude_profile": {
+      "numerical": 56.28,
+      "verbal": 61.98,
+      "spatial": 18.85,
+      "logical": 57.08
+    },
+    "riasec_profile": {
+      "R": 33.44,
+      "I": 76.54,
+      "A": 25.71,
+      "S": 28.25,
+      "E": 45.2,
+      "C": 85.02
+    }
+  },
+  "Medicine & Surgery (MBBS/Doctors)": {
+    "field_id": "FIELD_09",
+    "career_field": "Medicine & Surgery (MBBS/Doctors)",
+    "aptitude_profile": {
+      "numerical": 41.64,
+      "verbal": 68.85,
+      "spatial": 22.14,
+      "logical": 63.42
+    },
+    "riasec_profile": {
+      "R": 63.96,
+      "I": 86.64,
+      "A": 20.79,
+      "S": 76.02,
+      "E": 30.19,
+      "C": 56.9
+    }
+  },
+  "Nursing & Patient Care": {
+    "field_id": "FIELD_10",
+    "career_field": "Nursing & Patient Care",
+    "aptitude_profile": {
+      "numerical": 38.09,
+      "verbal": 58.85,
+      "spatial": 22.04,
+      "logical": 53.05
+    },
+    "riasec_profile": {
+      "R": 60.5,
+      "I": 60.18,
+      "A": 22.9,
+      "S": 76.31,
+      "E": 31.81,
+      "C": 55.14
+    }
+  },
+  "Pharmacy & Pharmaceutical Sciences": {
+    "field_id": "FIELD_11",
+    "career_field": "Pharmacy & Pharmaceutical Sciences",
+    "aptitude_profile": {
+      "numerical": 48.14,
+      "verbal": 66.96,
+      "spatial": 17.0,
+      "logical": 57.14
+    },
+    "riasec_profile": {
+      "R": 40.29,
+      "I": 81.0,
+      "A": 21.14,
+      "S": 69.71,
+      "E": 37.43,
+      "C": 65.14
+    }
+  },
+  "Biotechnology & Life Sciences": {
+    "field_id": "FIELD_12",
+    "career_field": "Biotechnology & Life Sciences",
+    "aptitude_profile": {
+      "numerical": 51.94,
+      "verbal": 72.25,
+      "spatial": 25.56,
+      "logical": 64.09
+    },
+    "riasec_profile": {
+      "R": 65.51,
+      "I": 96.0,
+      "A": 32.26,
+      "S": 41.66,
+      "E": 28.0,
+      "C": 55.89
+    }
+  },
+  "Dentistry & Oral Health": {
+    "field_id": "FIELD_13",
+    "career_field": "Dentistry & Oral Health",
+    "aptitude_profile": {
+      "numerical": 34.12,
+      "verbal": 54.22,
+      "spatial": 26.97,
+      "logical": 50.45
+    },
+    "riasec_profile": {
+      "R": 77.69,
+      "I": 67.8,
+      "A": 18.23,
+      "S": 59.46,
+      "E": 21.48,
+      "C": 63.29
+    }
+  },
+  "Physiotherapy & Rehabilitation": {
+    "field_id": "FIELD_14",
+    "career_field": "Physiotherapy & Rehabilitation",
+    "aptitude_profile": {
+      "numerical": 34.17,
+      "verbal": 59.05,
+      "spatial": 20.01,
+      "logical": 52.74
+    },
+    "riasec_profile": {
+      "R": 51.22,
+      "I": 61.08,
+      "A": 32.79,
+      "S": 88.53,
+      "E": 29.89,
+      "C": 50.99
+    }
+  },
+  "Veterinary Science & Animal Care": {
+    "field_id": "FIELD_15",
+    "career_field": "Veterinary Science & Animal Care",
+    "aptitude_profile": {
+      "numerical": 35.66,
+      "verbal": 50.23,
+      "spatial": 18.96,
+      "logical": 48.78
+    },
+    "riasec_profile": {
+      "R": 89.96,
+      "I": 65.14,
+      "A": 16.54,
+      "S": 49.04,
+      "E": 18.64,
+      "C": 54.43
+    }
+  },
+  "Architecture & Urban Planning": {
+    "field_id": "FIELD_16",
+    "career_field": "Architecture & Urban Planning",
+    "aptitude_profile": {
+      "numerical": 46.43,
+      "verbal": 59.39,
+      "spatial": 37.5,
+      "logical": 55.36
+    },
+    "riasec_profile": {
+      "R": 77.43,
+      "I": 67.57,
+      "A": 66.86,
+      "S": 38.14,
+      "E": 52.14,
+      "C": 52.86
+    }
+  },
+  "Graphic Design & Visual Arts": {
+    "field_id": "FIELD_17",
+    "career_field": "Graphic Design & Visual Arts",
+    "aptitude_profile": {
+      "numerical": 25.9,
+      "verbal": 49.57,
+      "spatial": 28.11,
+      "logical": 44.41
+    },
+    "riasec_profile": {
+      "R": 53.08,
+      "I": 39.58,
+      "A": 100.0,
+      "S": 31.72,
+      "E": 41.43,
+      "C": 44.72
+    }
+  },
+  "UI/UX Design & Digital Product": {
+    "field_id": "FIELD_18",
+    "career_field": "UI/UX Design & Digital Product",
+    "aptitude_profile": {
+      "numerical": 38.43,
+      "verbal": 55.8,
+      "spatial": 24.11,
+      "logical": 50.7
+    },
+    "riasec_profile": {
+      "R": 38.28,
+      "I": 64.5,
+      "A": 77.57,
+      "S": 32.14,
+      "E": 50.36,
+      "C": 58.93
+    }
+  },
+  "Fashion & Textile Design": {
+    "field_id": "FIELD_19",
+    "career_field": "Fashion & Textile Design",
+    "aptitude_profile": {
+      "numerical": 37.5,
+      "verbal": 51.32,
+      "spatial": 28.54,
+      "logical": 50.43
+    },
+    "riasec_profile": {
+      "R": 71.35,
+      "I": 25.07,
+      "A": 88.57,
+      "S": 26.14,
+      "E": 38.64,
+      "C": 50.78
+    }
+  },
+  "Interior & Spatial Design": {
+    "field_id": "FIELD_20",
+    "career_field": "Interior & Spatial Design",
+    "aptitude_profile": {
+      "numerical": 40.22,
+      "verbal": 56.48,
+      "spatial": 40.61,
+      "logical": 51.34
+    },
+    "riasec_profile": {
+      "R": 55.86,
+      "I": 41.58,
+      "A": 87.5,
+      "S": 40.86,
+      "E": 54.5,
+      "C": 50.64
+    }
+  },
+  "Animation, Game & VFX Design": {
+    "field_id": "FIELD_21",
+    "career_field": "Animation, Game & VFX Design",
+    "aptitude_profile": {
+      "numerical": 34.86,
+      "verbal": 56.68,
+      "spatial": 28.57,
+      "logical": 50.46
+    },
+    "riasec_profile": {
+      "R": 53.0,
+      "I": 39.57,
+      "A": 100.0,
+      "S": 31.14,
+      "E": 37.43,
+      "C": 44.71
+    }
+  },
+  "Chartered Accountancy & Auditing": {
+    "field_id": "FIELD_22",
+    "career_field": "Chartered Accountancy & Auditing",
+    "aptitude_profile": {
+      "numerical": 54.43,
+      "verbal": 57.57,
+      "spatial": 16.93,
+      "logical": 52.25
+    },
+    "riasec_profile": {
+      "R": 16.29,
+      "I": 51.0,
+      "A": 15.43,
+      "S": 30.43,
+      "E": 55.29,
+      "C": 100.0
+    }
+  },
+  "Financial Analysis & Investment": {
+    "field_id": "FIELD_23",
+    "career_field": "Financial Analysis & Investment",
+    "aptitude_profile": {
+      "numerical": 58.0,
+      "verbal": 58.68,
+      "spatial": 12.96,
+      "logical": 54.66
+    },
+    "riasec_profile": {
+      "R": 14.29,
+      "I": 50.42,
+      "A": 19.22,
+      "S": 46.28,
+      "E": 74.28,
+      "C": 89.0
+    }
+  },
+  "Banking & Insurance": {
+    "field_id": "FIELD_24",
+    "career_field": "Banking & Insurance",
+    "aptitude_profile": {
+      "numerical": 43.75,
+      "verbal": 57.38,
+      "spatial": 11.57,
+      "logical": 50.25
+    },
+    "riasec_profile": {
+      "R": 22.5,
+      "I": 42.57,
+      "A": 14.29,
+      "S": 46.36,
+      "E": 67.72,
+      "C": 87.43
+    }
+  },
+  "Business Administration & Operations": {
+    "field_id": "FIELD_25",
+    "career_field": "Business Administration & Operations",
+    "aptitude_profile": {
+      "numerical": 32.62,
+      "verbal": 50.28,
+      "spatial": 26.14,
+      "logical": 46.01
+    },
+    "riasec_profile": {
+      "R": 64.82,
+      "I": 38.14,
+      "A": 26.02,
+      "S": 41.24,
+      "E": 44.28,
+      "C": 65.88
+    }
+  },
+  "Marketing & Brand Management": {
+    "field_id": "FIELD_26",
+    "career_field": "Marketing & Brand Management",
+    "aptitude_profile": {
+      "numerical": 47.57,
+      "verbal": 60.14,
+      "spatial": 18.96,
+      "logical": 54.55
+    },
+    "riasec_profile": {
+      "R": 14.58,
+      "I": 50.64,
+      "A": 38.18,
+      "S": 38.83,
+      "E": 89.5,
+      "C": 66.78
+    }
+  },
+  "Sales & Business Development": {
+    "field_id": "FIELD_27",
+    "career_field": "Sales & Business Development",
+    "aptitude_profile": {
+      "numerical": 42.53,
+      "verbal": 56.14,
+      "spatial": 20.53,
+      "logical": 47.52
+    },
+    "riasec_profile": {
+      "R": 29.82,
+      "I": 31.39,
+      "A": 20.98,
+      "S": 45.52,
+      "E": 90.23,
+      "C": 72.52
+    }
+  },
+  "Human Resource Management": {
+    "field_id": "FIELD_28",
+    "career_field": "Human Resource Management",
+    "aptitude_profile": {
+      "numerical": 36.31,
+      "verbal": 58.49,
+      "spatial": 14.86,
+      "logical": 49.55
+    },
+    "riasec_profile": {
+      "R": 17.71,
+      "I": 29.43,
+      "A": 18.34,
+      "S": 51.91,
+      "E": 78.95,
+      "C": 86.0
+    }
+  },
+  "Corporate Law & Legal Practice": {
+    "field_id": "FIELD_29",
+    "career_field": "Corporate Law & Legal Practice",
+    "aptitude_profile": {
+      "numerical": 33.5,
+      "verbal": 68.07,
+      "spatial": 13.82,
+      "logical": 56.24
+    },
+    "riasec_profile": {
+      "R": 22.11,
+      "I": 61.57,
+      "A": 30.57,
+      "S": 48.6,
+      "E": 70.75,
+      "C": 69.54
+    }
+  },
+  "Journalism & Content Writing": {
+    "field_id": "FIELD_30",
+    "career_field": "Journalism & Content Writing",
+    "aptitude_profile": {
+      "numerical": 24.11,
+      "verbal": 58.77,
+      "spatial": 19.29,
+      "logical": 47.25
+    },
+    "riasec_profile": {
+      "R": 27.67,
+      "I": 37.63,
+      "A": 57.32,
+      "S": 38.19,
+      "E": 52.14,
+      "C": 69.8
+    }
+  },
+  "Public Relations & Mass Media": {
+    "field_id": "FIELD_31",
+    "career_field": "Public Relations & Mass Media",
+    "aptitude_profile": {
+      "numerical": 32.54,
+      "verbal": 59.82,
+      "spatial": 17.86,
+      "logical": 50.24
+    },
+    "riasec_profile": {
+      "R": 14.29,
+      "I": 36.14,
+      "A": 59.64,
+      "S": 58.0,
+      "E": 91.57,
+      "C": 56.0
+    }
+  },
+  "Psychology & Mental Health Counseling": {
+    "field_id": "FIELD_32",
+    "career_field": "Psychology & Mental Health Counseling",
+    "aptitude_profile": {
+      "numerical": 34.94,
+      "verbal": 62.29,
+      "spatial": 18.21,
+      "logical": 55.0
+    },
+    "riasec_profile": {
+      "R": 33.45,
+      "I": 64.67,
+      "A": 39.76,
+      "S": 84.77,
+      "E": 39.09,
+      "C": 51.41
+    }
+  },
+  "School Education & Teaching": {
+    "field_id": "FIELD_33",
+    "career_field": "School Education & Teaching",
+    "aptitude_profile": {
+      "numerical": 38.54,
+      "verbal": 66.8,
+      "spatial": 17.58,
+      "logical": 52.56
+    },
+    "riasec_profile": {
+      "R": 41.78,
+      "I": 66.93,
+      "A": 51.17,
+      "S": 95.47,
+      "E": 35.91,
+      "C": 50.21
+    }
+  },
+  "Hotel Management & Hospitality": {
+    "field_id": "FIELD_34",
+    "career_field": "Hotel Management & Hospitality",
+    "aptitude_profile": {
+      "numerical": 33.34,
+      "verbal": 52.08,
+      "spatial": 22.29,
+      "logical": 44.06
+    },
+    "riasec_profile": {
+      "R": 38.14,
+      "I": 14.76,
+      "A": 24.14,
+      "S": 67.33,
+      "E": 69.9,
+      "C": 72.0
+    }
+  },
+  "Culinary Arts & Food Technology": {
+    "field_id": "FIELD_35",
+    "career_field": "Culinary Arts & Food Technology",
+    "aptitude_profile": {
+      "numerical": 42.86,
+      "verbal": 52.25,
+      "spatial": 27.64,
+      "logical": 51.79
+    },
+    "riasec_profile": {
+      "R": 69.14,
+      "I": 24.0,
+      "A": 38.86,
+      "S": 42.14,
+      "E": 73.29,
+      "C": 62.14
+    }
+  },
+  "Logistics & Supply Chain Management": {
+    "field_id": "FIELD_36",
+    "career_field": "Logistics & Supply Chain Management",
+    "aptitude_profile": {
+      "numerical": 35.43,
+      "verbal": 49.86,
+      "spatial": 26.82,
+      "logical": 45.47
+    },
+    "riasec_profile": {
+      "R": 61.83,
+      "I": 29.45,
+      "A": 14.29,
+      "S": 26.57,
+      "E": 58.64,
+      "C": 76.76
+    }
+  },
+  "Agricultural Sciences & Agribusiness": {
+    "field_id": "FIELD_37",
+    "career_field": "Agricultural Sciences & Agribusiness",
+    "aptitude_profile": {
+      "numerical": 34.38,
+      "verbal": 50.41,
+      "spatial": 31.92,
+      "logical": 48.92
+    },
+    "riasec_profile": {
+      "R": 86.76,
+      "I": 54.84,
+      "A": 19.13,
+      "S": 24.23,
+      "E": 39.28,
+      "C": 63.68
+    }
+  },
+  "Environmental Science & Ecology": {
+    "field_id": "FIELD_38",
+    "career_field": "Environmental Science & Ecology",
+    "aptitude_profile": {
+      "numerical": 45.23,
+      "verbal": 67.87,
+      "spatial": 23.57,
+      "logical": 61.58
+    },
+    "riasec_profile": {
+      "R": 61.46,
+      "I": 87.46,
+      "A": 27.07,
+      "S": 56.77,
+      "E": 44.43,
+      "C": 56.02
+    }
+  },
+  "Physics & Astronomy": {
+    "field_id": "FIELD_39",
+    "career_field": "Physics & Astronomy",
+    "aptitude_profile": {
+      "numerical": 66.71,
+      "verbal": 75.16,
+      "spatial": 25.26,
+      "logical": 65.79
+    },
+    "riasec_profile": {
+      "R": 70.38,
+      "I": 96.48,
+      "A": 41.67,
+      "S": 34.86,
+      "E": 30.1,
+      "C": 63.28
+    }
+  },
+  "Chemistry & Materials Science": {
+    "field_id": "FIELD_40",
+    "career_field": "Chemistry & Materials Science",
+    "aptitude_profile": {
+      "numerical": 55.36,
+      "verbal": 70.14,
+      "spatial": 25.43,
+      "logical": 65.0
+    },
+    "riasec_profile": {
+      "R": 82.07,
+      "I": 95.0,
+      "A": 26.36,
+      "S": 18.08,
+      "E": 24.72,
+      "C": 64.0
+    }
+  },
+  "Mathematics & Actuarial Science": {
+    "field_id": "FIELD_41",
+    "career_field": "Mathematics & Actuarial Science",
+    "aptitude_profile": {
+      "numerical": 71.89,
+      "verbal": 68.29,
+      "spatial": 20.07,
+      "logical": 64.28
+    },
+    "riasec_profile": {
+      "R": 36.57,
+      "I": 94.72,
+      "A": 38.64,
+      "S": 28.36,
+      "E": 30.36,
+      "C": 77.08
+    }
+  },
+  "Performing Arts (Music, Dance, Theatre)": {
+    "field_id": "FIELD_42",
+    "career_field": "Performing Arts (Music, Dance, Theatre)",
+    "aptitude_profile": {
+      "numerical": 25.15,
+      "verbal": 49.47,
+      "spatial": 27.26,
+      "logical": 45.3
+    },
+    "riasec_profile": {
+      "R": 66.6,
+      "I": 32.94,
+      "A": 45.21,
+      "S": 40.07,
+      "E": 41.7,
+      "C": 51.17
+    }
+  },
+  "Merchant Navy & Aviation Pilot": {
+    "field_id": "FIELD_43",
+    "career_field": "Merchant Navy & Aviation Pilot",
+    "aptitude_profile": {
+      "numerical": 39.03,
+      "verbal": 54.68,
+      "spatial": 50.45,
+      "logical": 51.66
+    },
+    "riasec_profile": {
+      "R": 81.93,
+      "I": 42.36,
+      "A": 16.22,
+      "S": 28.82,
+      "E": 49.54,
+      "C": 65.68
+    }
+  },
+  "Sports, Fitness & Athletic Training": {
+    "field_id": "FIELD_44",
+    "career_field": "Sports, Fitness & Athletic Training",
+    "aptitude_profile": {
+      "numerical": 21.86,
+      "verbal": 52.48,
+      "spatial": 22.78,
+      "logical": 48.88
+    },
+    "riasec_profile": {
+      "R": 77.57,
+      "I": 50.78,
+      "A": 25.36,
+      "S": 81.22,
+      "E": 41.07,
+      "C": 44.28
+    }
+  },
+  "Event Management & Public Relations": {
+    "field_id": "FIELD_45",
+    "career_field": "Event Management & Public Relations",
+    "aptitude_profile": {
+      "numerical": 42.0,
+      "verbal": 60.25,
+      "spatial": 26.79,
+      "logical": 50.04
+    },
+    "riasec_profile": {
+      "R": 14.29,
+      "I": 22.29,
+      "A": 35.57,
+      "S": 65.14,
+      "E": 100.0,
+      "C": 70.86
+    }
+  },
+  "Vocational & Industrial Trades (ITI)": {
+    "field_id": "FIELD_46",
+    "career_field": "Vocational & Industrial Trades (ITI)",
+    "aptitude_profile": {
+      "numerical": 30.81,
+      "verbal": 45.65,
+      "spatial": 32.21,
+      "logical": 44.45
+    },
+    "riasec_profile": {
+      "R": 89.19,
+      "I": 38.67,
+      "A": 18.71,
+      "S": 24.44,
+      "E": 22.8,
+      "C": 63.94
+    }
+  }
+}

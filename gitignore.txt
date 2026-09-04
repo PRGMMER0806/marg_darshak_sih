@@ -1,0 +1,9 @@
+.venv/
+app/.env
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+ml_model/*.pkl
+.DS_Store
+Thumbs.db
