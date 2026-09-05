@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 function Assessment() {
+  const navigate = useNavigate();
+  const timeoutHandled = useRef(false);
+
   const [attempt, setAttempt] = useState(null);
   const [aptitudeQuestions, setAptitudeQuestions] = useState([]);
   const [riasecQuestions, setRiasecQuestions] = useState([]);
@@ -32,6 +36,7 @@ function Assessment() {
           startResponse.data.status === "paused"
         ) {
           localStorage.setItem("assessment_locked", "true");
+
           window.dispatchEvent(
             new Event("assessment-lock-changed")
           );
@@ -57,6 +62,55 @@ function Assessment() {
     loadAssessment();
   }, []);
 
+  /*
+   * Handle assessment timeout.
+   *
+   * When the frontend timer reaches 00:00,
+   * the backend is asked to reset the attempt.
+   */
+  const handleTimeout = async () => {
+    if (!attempt?.attempt_id || timeoutHandled.current) {
+      return;
+    }
+
+    timeoutHandled.current = true;
+    setError("");
+
+    try {
+      await api.post(
+        `/aptitude/${attempt.attempt_id}/timeout`
+      );
+
+      // Remove the assessment lock
+      localStorage.removeItem("assessment_locked");
+
+      window.dispatchEvent(
+        new Event("assessment-lock-changed")
+      );
+
+      // Clear local assessment state
+      setAttempt(null);
+      setAptitudeAnswers({});
+      setRiasecAnswers({});
+      setResult(null);
+      setRemainingSeconds(0);
+      setIsPaused(false);
+
+      // Return student to home
+      navigate("/student/home", { replace: true });
+    } catch (err) {
+      timeoutHandled.current = false;
+
+      setError(
+        err.response?.data?.detail ||
+          "The assessment timed out, but could not be reset."
+      );
+    }
+  };
+
+  /*
+   * Assessment countdown timer.
+   */
   useEffect(() => {
     if (isPaused || remainingSeconds <= 0) {
       return;
@@ -75,6 +129,19 @@ function Assessment() {
 
     return () => clearInterval(timer);
   }, [remainingSeconds, isPaused]);
+
+  /*
+   * Detect when the countdown reaches 00:00.
+   */
+  useEffect(() => {
+    if (
+      remainingSeconds === 0 &&
+      attempt?.status === "in_progress" &&
+      !isPaused
+    ) {
+      handleTimeout();
+    }
+  }, [remainingSeconds, attempt, isPaused]);
 
   const handleAptitudeAnswer = (questionId, optionIndex) => {
     if (isPaused) {
@@ -119,7 +186,11 @@ function Assessment() {
           status: "paused",
         }));
 
-        localStorage.setItem("assessment_locked", "true");
+        localStorage.setItem(
+          "assessment_locked",
+          "true"
+        );
+
         window.dispatchEvent(
           new Event("assessment-lock-changed")
         );
@@ -136,7 +207,11 @@ function Assessment() {
           status: "in_progress",
         }));
 
-        localStorage.setItem("assessment_locked", "true");
+        localStorage.setItem(
+          "assessment_locked",
+          "true"
+        );
+
         window.dispatchEvent(
           new Event("assessment-lock-changed")
         );
@@ -195,7 +270,10 @@ function Assessment() {
         status: "completed",
       }));
 
-      localStorage.removeItem("assessment_locked");
+      localStorage.removeItem(
+        "assessment_locked"
+      );
+
       window.dispatchEvent(
         new Event("assessment-lock-changed")
       );
@@ -211,7 +289,9 @@ function Assessment() {
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+    const minutes = Math.floor(
+      (seconds % 3600) / 60
+    );
     const secs = seconds % 60;
 
     return `${String(hours).padStart(2, "0")}:${String(
@@ -259,8 +339,8 @@ function Assessment() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-slate-500">
-          Answer each question based on your own abilities, interests,
-          and preferences.
+          Answer each question based on your own abilities,
+          interests, and preferences.
         </p>
       </div>
 
@@ -361,31 +441,34 @@ function Assessment() {
                 </h3>
 
                 <div className="mt-5 space-y-3">
-                  {question.options.map((option, optionIndex) => {
-                    const selected =
-                      aptitudeAnswers[question.id] === optionIndex;
+                  {question.options.map(
+                    (option, optionIndex) => {
+                      const selected =
+                        aptitudeAnswers[question.id] ===
+                        optionIndex;
 
-                    return (
-                      <button
-                        key={optionIndex}
-                        type="button"
-                        disabled={isPaused}
-                        onClick={() =>
-                          handleAptitudeAnswer(
-                            question.id,
-                            optionIndex
-                          )
-                        }
-                        className={`w-full rounded-2xl border px-4 py-4 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                          selected
-                            ? "border-violet-600 bg-violet-50 text-violet-700"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-slate-50"
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={optionIndex}
+                          type="button"
+                          disabled={isPaused}
+                          onClick={() =>
+                            handleAptitudeAnswer(
+                              question.id,
+                              optionIndex
+                            )
+                          }
+                          className={`w-full rounded-2xl border px-4 py-4 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            selected
+                              ? "border-violet-600 bg-violet-50 text-violet-700"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      );
+                    }
+                  )}
                 </div>
               </div>
             ))}
@@ -543,36 +626,36 @@ function Assessment() {
               </p>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {Object.entries(result.trait_scores).map(
-                  ([trait, score]) => (
-                    <div
-                      key={trait}
-                      className="rounded-2xl bg-slate-50 p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium capitalize text-slate-700">
-                          {trait.replaceAll("_", " ")}
-                        </p>
+                {Object.entries(
+                  result.trait_scores
+                ).map(([trait, score]) => (
+                  <div
+                    key={trait}
+                    className="rounded-2xl bg-slate-50 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium capitalize text-slate-700">
+                        {trait.replaceAll("_", " ")}
+                      </p>
 
-                        <p className="text-sm font-bold text-violet-600">
-                          {score}%
-                        </p>
-                      </div>
-
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                        <div
-                          className="h-full rounded-full bg-violet-600"
-                          style={{
-                            width: `${Math.min(
-                              Math.max(score, 0),
-                              100
-                            )}%`,
-                          }}
-                        />
-                      </div>
+                      <p className="text-sm font-bold text-violet-600">
+                        {score}%
+                      </p>
                     </div>
-                  )
-                )}
+
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                      <div
+                        className="h-full rounded-full bg-violet-600"
+                        style={{
+                          width: `${Math.min(
+                            Math.max(score, 0),
+                            100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -586,8 +669,9 @@ function Assessment() {
           </h2>
 
           <p className="mt-2 text-sm text-slate-300">
-            {aptitudeQuestions.length} aptitude questions and{" "}
-            {riasecQuestions.length} interest questions loaded.
+            {aptitudeQuestions.length} aptitude questions
+            and {riasecQuestions.length} interest questions
+            loaded.
           </p>
 
           <p className="mt-4 text-sm text-slate-400">

@@ -27,7 +27,7 @@ router = APIRouter(
 # CONSTANTS
 # =========================================================
 
-ASSESSMENT_DURATION_MINUTES = 90
+ASSESSMENT_DURATION_MINUTES = 1
 
 ASSESSMENT_DURATION_SECONDS = (
     ASSESSMENT_DURATION_MINUTES * 60
@@ -109,6 +109,67 @@ async def reset_attempt(attempt: Attempt):
 
     # Remove the old attempt completely.
     await attempt.delete()
+
+@router.post("/{attempt_id}/timeout")
+async def timeout_assessment(
+    attempt_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    user_doc = await User.find_one(
+        User.username == current_user
+    )
+
+    if not user_doc:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    attempt = await Attempt.get(attempt_id)
+
+    if not attempt:
+        raise HTTPException(
+            status_code=404,
+            detail="Assessment attempt not found"
+        )
+
+    # Ownership check
+    if attempt.user_id != str(user_doc.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You are not allowed to reset this assessment"
+        )
+
+    # Never reset a completed assessment
+    if attempt.status == "completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Completed assessment cannot be reset"
+        )
+
+    # Timeout applies only to an actively running assessment
+    if attempt.status != "in_progress":
+        raise HTTPException(
+            status_code=400,
+            detail="Assessment is not currently running"
+        )
+
+    # Server-side expiration check
+    now = utc_now()
+
+    if attempt.expires_at is not None and now < attempt.expires_at:
+        raise HTTPException(
+            status_code=400,
+            detail="Assessment has not expired yet"
+        )
+
+    # Delete attempt + all associated answers
+    await reset_attempt(attempt)
+
+    return {
+        "message": "Assessment timed out and was reset successfully",
+        "reset": True
+    }
 
 
 # =========================================================
@@ -1085,3 +1146,4 @@ async def submit_attempt(
             "trait_scores": attempt.trait_scores,
         },
     }
+

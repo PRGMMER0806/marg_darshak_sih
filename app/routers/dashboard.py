@@ -38,6 +38,15 @@ async def get_dashboard(
         )
 
     latest_attempt = attempts[0]
+    weekly_trend = await get_weekly_trend(str(student.id))
+
+    peer_average = None
+
+    if student.school_id and student.class_name:
+        peer_average = await get_peer_average(
+            student.school_id,
+            student.class_name
+        )
 
     # ---------------------------------------------------------
     # STATISTICAL EVALUATION
@@ -98,6 +107,8 @@ async def get_dashboard(
             "total_attempts": len(attempts),
             "latest_score": latest_attempt.score,
             "latest_career_field": latest_attempt.career_field,
+            "weekly_trend": weekly_trend,
+            "peer_average": peer_average,
         },
 
         "latest_result": {
