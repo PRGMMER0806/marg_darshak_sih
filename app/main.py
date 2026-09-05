@@ -1,7 +1,18 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.core.db import init_db
-from app.routers import auth,aptitude,dashboard,career,student,parent,teacher,message,notification
+from app.routers import (
+    auth,
+    aptitude,
+    dashboard,
+    career,
+    student,
+    parent,
+    teacher,
+    message,
+    notification,
+    guidance,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -35,6 +46,7 @@ app.include_router(parent.router)
 app.include_router(teacher.router)
 app.include_router(message.router)
 app.include_router(notification.router)
+app.include_router(guidance.router)
 
 #status check
 @app.get("/")

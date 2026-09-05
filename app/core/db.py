@@ -30,6 +30,7 @@ async def init_db():
     from app.model_schema.message import Message
     from app.model_schema.notification import Notification
     from app.model_schema.flag import FollowUpFlag,Endorsement
-
+    from app.model_schema.student_interest import StudentInterest
+    from app.model_schema.education_state import EducationState
     #connecting to db and setting all
-    await init_beanie(database=database, document_models=[User,AptitudeQuestion,RiasecQuestion,Attempt,Answer,ParentContext,TeacherContext,Message,Notification,FollowUpFlag,Endorsement])
+    await init_beanie(database=database, document_models=[User,AptitudeQuestion,RiasecQuestion,Attempt,Answer,ParentContext,TeacherContext,Message,Notification,FollowUpFlag,Endorsement,StudentInterest,EducationState])
