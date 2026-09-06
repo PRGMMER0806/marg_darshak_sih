@@ -27,7 +27,7 @@ router = APIRouter(
 # CONSTANTS
 # =========================================================
 
-ASSESSMENT_DURATION_MINUTES = 1
+ASSESSMENT_DURATION_MINUTES = 90
 
 ASSESSMENT_DURATION_SECONDS = (
     ASSESSMENT_DURATION_MINUTES * 60

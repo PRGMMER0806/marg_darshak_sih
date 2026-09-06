@@ -281,178 +281,22 @@ function Guidance() {
       </div>
 
       {guidance && (
-        <div className="space-y-6">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-violet-600">
-              Guidance Result
-            </p>
+  <div className="rounded-3xl bg-white p-8 shadow-sm">
+    <p className="text-sm font-semibold uppercase tracking-wide text-violet-600">
+      Guidance Result
+    </p>
 
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              {guidance.title}
-            </h2>
+    <h2 className="mt-2 text-3xl font-bold text-slate-900">
+      Your Career Guide
+    </h2>
 
-            <div className="mt-5 rounded-2xl bg-violet-50 p-5">
-              <p className="text-xs font-bold uppercase text-violet-600">
-                Case
-              </p>
-
-              <p className="mt-1 font-semibold text-slate-900">
-                {guidance.case}
-              </p>
-            </div>
-
-            <p className="mt-6 leading-7 text-slate-600">
-              {guidance.student_summary}
-            </p>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-3xl bg-white p-7 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-900">
-                What Your Profile Says
-              </h3>
-
-              <p className="mt-4 leading-7 text-slate-600">
-                {guidance.case_explanation}
-              </p>
-
-              <div className="mt-6">
-                <p className="text-sm font-semibold text-slate-700">
-                  ML interpretation
-                </p>
-
-                <p className="mt-2 leading-7 text-slate-600">
-                  {guidance.ml_top_3_interpretation}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-white p-7 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-900">
-                Your Interest
-              </h3>
-
-              <p className="mt-4 leading-7 text-slate-600">
-                {guidance.stated_interest_guidance}
-              </p>
-
-              <div className="mt-6">
-                <p className="text-sm font-semibold text-slate-700">
-                  Education feasibility
-                </p>
-
-                <p className="mt-2 leading-7 text-slate-600">
-                  {guidance.education_feasibility}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h3 className="text-2xl font-bold text-slate-900">
-              Pathways to Explore
-            </h3>
-
-            <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              {(guidance.pathway_guidance || []).map(
-                (pathway) => (
-                  <div
-                    key={pathway.career_field}
-                    className="rounded-2xl bg-slate-50 p-6"
-                  >
-                    <p className="text-xs font-bold uppercase text-violet-600">
-                      {pathway.relationship_to_student}
-                    </p>
-
-                    <h4 className="mt-2 text-xl font-bold text-slate-900">
-                      {pathway.career_field}
-                    </h4>
-
-                    <p className="mt-4 text-sm leading-6 text-slate-600">
-                      {pathway.why_explore}
-                    </p>
-
-                    <p className="mt-4 text-sm leading-6 text-slate-700">
-                      {pathway.route_summary}
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded-3xl bg-white p-7 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-900">
-                Strongest Current Pathway
-              </h3>
-
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                {guidance.strongest_current_pathway}
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-white p-7 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-900">
-                Next Steps
-              </h3>
-
-              <div className="mt-4 space-y-3">
-                {(guidance.immediate_next_steps || []).map(
-                  (step, index) => (
-                    <div
-                      key={index}
-                      className="rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600"
-                    >
-                      {index + 1}. {step}
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-white p-7 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-900">
-                Questions to Explore
-              </h3>
-
-              <div className="mt-4 space-y-3">
-                {(guidance.questions_to_explore || []).map(
-                  (item, index) => (
-                    <div
-                      key={index}
-                      className="rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600"
-                    >
-                      {item}
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-
-          {guidance.important_caveats?.length > 0 && (
-            <div className="rounded-3xl bg-amber-50 p-7">
-              <h3 className="text-xl font-bold text-amber-900">
-                Important
-              </h3>
-
-              <div className="mt-4 space-y-2">
-                {guidance.important_caveats.map(
-                  (item, index) => (
-                    <p
-                      key={index}
-                      className="text-sm leading-6 text-amber-800"
-                    >
-                      • {item}
-                    </p>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+    <div className="mt-6 rounded-2xl bg-violet-50 p-6">
+      <p className="whitespace-pre-wrap leading-8 text-slate-700">
+        {guidance.reply}
+      </p>
+    </div>
+  </div>
+)}
     </div>
   );
 }

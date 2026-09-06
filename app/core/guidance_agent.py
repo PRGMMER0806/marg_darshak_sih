@@ -266,6 +266,32 @@ async def build_guidance_context(
         for interest in interest_history
     ]
 
+    # =========================================================
+    # EVOLVING INTEREST SNAPSHOT
+    # =========================================================
+
+    current_interest = (
+        interest_history[0].interest
+        if interest_history
+        else None
+    )
+
+    previous_interests = [
+        item["interest"]
+        for item in interest_history_data[1:]
+    ]
+
+    evolving_interest_context = {
+    "current_interest": current_interest,
+    "previous_interests": previous_interests,
+    "interest_changed": (
+        bool(previous_interests)
+        and current_interest is not None
+        and current_interest.lower()
+        != previous_interests[0].lower()
+    ),
+}
+
     # =====================================================
     # 3. STATED INTEREST PATHWAY
     # =====================================================
@@ -479,48 +505,15 @@ async def build_guidance_context(
         # -------------------------------------------------
 
         "guidance_context": {
-
-            "requester_role": (
-                normalized_requester_role
-            ),
-
-            "student_interest": (
-                latest_interest
-            ),
-
-            "student_interest_pathway": (
-                stated_interest_pathway
-            ),
-
-            "interest_history": (
-                interest_history_data
-            ),
-
-            # These are role-scoped.
-            #
-            # Student:
-            #     None
-            #
-            # Parent:
-            #     own ParentContext
-            #
-            # Teacher:
-            #     own TeacherContext
-            "teacher_context": (
-                teacher_context_data
-            ),
-
-            "parent_context": (
-                parent_context_data
-            ),
-
-            "education_state": (
-                education_state_data
-            ),
-
-            "decision_analysis": (
-                guidance_decision
-            ),
-        },
+    "requester_role": normalized_requester_role,
+    "student_interest": latest_interest,
+    "student_interest_pathway": stated_interest_pathway,
+    "interest_history": interest_history_data,
+    "evolving_interest_context": evolving_interest_context,
+    "teacher_context": teacher_context_data,
+    "parent_context": parent_context_data,
+    "education_state": education_state_data,
+    "decision_analysis": guidance_decision,
+},
     }
 

@@ -38,6 +38,10 @@ from app.model_schema.education_state import (
     TeacherEducationStateRequest,
 )
 
+from app.model_schema.guidance_conversation import (
+    GuidanceConversationMessage,
+)
+
 from app.core.guidance_agent import (
     build_guidance_context,
 )
@@ -64,6 +68,59 @@ router = APIRouter(
 class GuidanceGenerationRequest(BaseModel):
     question: Optional[str] = None
 
+# =========================================================
+# GUIDANCE CONVERSATION MEMORY
+# =========================================================
+
+async def _get_guidance_history(
+    student_id: str,
+    requester_id: str,
+    requester_role: str,
+    limit: int = 2,
+):
+    messages = await GuidanceConversationMessage.find(
+        GuidanceConversationMessage.student_id == student_id,
+        GuidanceConversationMessage.requester_id == requester_id,
+        GuidanceConversationMessage.requester_role == requester_role,
+    ).sort(
+        "-created_at"
+    ).limit(
+        limit
+    ).to_list()
+
+    # Return oldest -> newest for the LLM
+    messages.reverse()
+
+    return [
+        {
+            "role": message.role,
+            "content": message.content,
+            "created_at": message.created_at,
+        }
+        for message in messages
+    ]
+
+
+async def _save_guidance_message(
+    student_id: str,
+    requester_id: str,
+    requester_role: str,
+    attempt_id: str | None,
+    role: str,
+    content: str,
+):
+    message = GuidanceConversationMessage(
+        student_id=student_id,
+        requester_id=requester_id,
+        requester_role=requester_role,
+        attempt_id=attempt_id,
+        role=role,
+        content=content,
+    )
+
+    await message.insert()
+
+    return message
 
 # =========================================================
 # GET GUIDANCE CONTEXT
@@ -672,52 +729,84 @@ async def generate_student_guidance(
     )
 
     # =====================================================
-    # 5. CALL GUIDANCE AGENT
+    # 5. IDENTIFY REQUESTER ROLE
+    # =====================================================
+
+    requester_role = getattr(
+        current_user_doc.role,
+        "value",
+       current_user_doc.role,
+    )
+
+    requester_role = str(
+        requester_role
+    ).lower()
+
+    # =====================================================
+    # 6. LOAD RECENT CONVERSATION MEMORY
+    # =====================================================
+
+    conversation_history = await _get_guidance_history(
+        student_id=str(student.id),
+        requester_id=str(current_user_doc.id),
+        requester_role=requester_role,
+        limit=8,
+    )
+
+    # =====================================================
+    # 7. SAVE USER MESSAGE
+    # =====================================================
+
+    if payload.question and payload.question.strip():
+        await _save_guidance_message(
+            student_id=str(student.id),
+           requester_id=str(current_user_doc.id),
+            requester_role=requester_role,
+           attempt_id=str(latest_attempt.id),
+            role="user",
+           content=payload.question.strip(),
+        )
+
+    # =====================================================
+    # 8. CALL GUIDANCE AGENT
     # =====================================================
 
     try:
-
         guidance = await generate_guidance(
-            guidance_context=(
-                guidance_context
-            ),
-
-            user_question=(
-                payload.question
-            ),
+            guidance_context=guidance_context,
+           user_question=payload.question,
+            conversation_history=conversation_history,
         )
-
     except RuntimeError as exc:
-
         raise HTTPException(
             status_code=502,
             detail=str(exc),
         )
 
     # =====================================================
-    # 6. RETURN RESULT
+    # 9. SAVE ASSISTANT RESPONSE
     # =====================================================
 
-    requester_role = getattr(
-        current_user_doc.role,
-        "value",
-        current_user_doc.role,
+    assistant_memory = guidance.reply.strip()
+
+    await _save_guidance_message(
+        student_id=str(student.id),
+        requester_id=str(current_user_doc.id),
+        requester_role=requester_role,
+        attempt_id=str(latest_attempt.id),
+        role="assistant",
+        content=assistant_memory,
     )
 
+    # =====================================================
+    # 10. RETURN GUIDANCE RESPONSE
+    # =====================================================
+
     return {
-
-        "student_id": str(
-            student.id
-        ),
-
-        "attempt_id": str(
-            latest_attempt.id
-        ),
-
-        "requester_role": str(
-            requester_role
-        ),
-
-        "guidance": guidance,
+        "student_id": str(student.id),
+        "attempt_id": str(latest_attempt.id),
+        "requester_role": requester_role,
+        "guidance": {
+            "reply": guidance.reply,
+        },
     }
-
