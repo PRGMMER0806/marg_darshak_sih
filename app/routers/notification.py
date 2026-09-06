@@ -124,10 +124,9 @@ async def check_inactive(
         # Prevent repeated duplicate notifications
         # every time the teacher checks.
         existing_notification = await Notification.find_one(
-            Notification.user_id == str(student.id),
-            Notification.type == NotifType.missed,
-            Notification.read == False
-        )
+    Notification.user_id == str(student.id),
+    Notification.type == NotifType.missed
+)
 
         if existing_notification:
             continue
