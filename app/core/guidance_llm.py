@@ -1,3 +1,4 @@
+
 import asyncio
 import json
 import os
@@ -12,25 +13,68 @@ from app.core.guidance_grounding import build_grounded_context
 
 
 # =========================================================
-# ENVIRONMENT
+# ENVIRONMENT / LLM PROVIDER
 # =========================================================
 
 load_dotenv()
 
+LLM_PROVIDER = os.getenv(
+    "LLM_PROVIDER",
+    "gemini",
+).strip().lower()
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
     "gemini-3.7-flash",
 )
 
-if not GEMINI_API_KEY:
-    raise RuntimeError(
-        "GEMINI_API_KEY is not configured in the environment."
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+GROQ_MODEL = os.getenv(
+    "GROQ_MODEL",
+    "openai/gpt-oss-120b",
+)
+
+gemini_client = None
+groq_client = None
+
+
+if LLM_PROVIDER == "gemini":
+
+    if not GEMINI_API_KEY:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured "
+            "while LLM_PROVIDER=gemini."
+        )
+
+    gemini_client = genai.Client(
+        api_key=GEMINI_API_KEY
     )
 
-client = genai.Client(
-    api_key=GEMINI_API_KEY
-)
+
+elif LLM_PROVIDER == "groq":
+
+    if not GROQ_API_KEY:
+        raise RuntimeError(
+            "GROQ_API_KEY is not configured "
+            "while LLM_PROVIDER=groq."
+        )
+
+    from groq import Groq
+
+    groq_client = Groq(
+        api_key=GROQ_API_KEY
+    )
+
+
+else:
+
+    raise RuntimeError(
+        "Unsupported LLM_PROVIDER. "
+        "Use 'gemini' or 'groq'."
+    )
 
 
 # =========================================================
@@ -46,19 +90,24 @@ class PathwayGuidance(BaseModel):
 
 class GuidanceResponse(BaseModel):
     title: str
+
     case: Literal[
         "case_1",
         "case_2",
         "case_3",
         "insufficient_data",
     ]
+
     student_summary: str
     case_explanation: str
     ml_top_3_interpretation: str
     stated_interest_guidance: str
     education_feasibility: str
+
     pathway_guidance: List[PathwayGuidance]
+
     strongest_current_pathway: str
+
     immediate_next_steps: List[str]
     questions_to_explore: List[str]
     important_caveats: List[str]
@@ -125,6 +174,29 @@ CRITICAL RULES:
     as missing, unavailable, pending, uncertain, or requiring
     official verification.
 
+12A. For pathways whose backend verification_status is "missing"
+     or "unverified", DO NOT assert any specific education fact,
+     including:
+
+     - stream names
+     - subject requirements
+     - entrance examinations
+     - admission routes
+     - university/institution requirements
+     - eligibility requirements
+
+     You may only say that this information is unavailable,
+     unverified, or requires official verification.
+
+     Do not write statements such as:
+     - "Humanities stream is suitable for Journalism."
+     - "Commerce stream can be used for Journalism."
+     - "Arts stream is required."
+     - "Science stream is accepted."
+
+     unless that exact fact exists in verified backend pathway
+     knowledge for that pathway.
+
 13. Do not recommend changing schools unless the user explicitly
     asks about changing schools.
 
@@ -188,6 +260,7 @@ identical regardless of requester_role.
 Never change the ML result because of the requester role.
 
 ELIGIBILITY TERMINOLOGY RULE:
+
 When discussing streams, subjects, entrance examinations, or eligibility,
 use the exact terminology provided by the verified backend pathway knowledge.
 
@@ -195,20 +268,36 @@ Do not broaden, shorten, or paraphrase a verified eligibility term when doing
 so could change its meaning.
 
 For example:
+
 - "Science with Mathematics" must not be changed to "science stream".
+
 - Do not say that a student is eligible unless the backend explicitly establishes
   that eligibility.
+
 - If the student's actual allocated/eligible stream is unknown, say that it is
   still pending or unavailable.
 
 The backend pathway knowledge is authoritative for eligibility.
+
 Do not infer missing stream eligibility from general knowledge.
+
+22. Never describe a pathway as having "eligibility across all streams"
+    or as being "available to all streams" unless the backend explicitly
+    states that exact unrestricted eligibility.
+
+23. If accepted_streams are supplied but institution-specific or
+    admission-route-specific conditions also exist, preserve that
+    qualification in the response.
+
+24. Never convert "accepted streams" into a claim that every student
+    is eligible.
+
+25. Use "accepted streams" only when referring to pathway knowledge.
+    Use "eligible" only when the student's own backend education state
+    explicitly establishes eligibility.
 
 Respond only according to the supplied JSON schema.
 """
-
-
-
 
 
 # =========================================================
@@ -221,6 +310,7 @@ def extract_authoritative_top_3(
     """
     Read the ML Top-3 only from the authoritative backend context.
     """
+
     ml_profile = guidance_context.get(
         "ml_profile",
         {},
@@ -237,6 +327,7 @@ def extract_authoritative_top_3(
     authoritative_top_3: List[str] = []
 
     for recommendation in raw_top_3[:3]:
+
         if not isinstance(recommendation, dict):
             continue
 
@@ -245,6 +336,7 @@ def extract_authoritative_top_3(
         )
 
         if isinstance(career_field, str):
+
             career_field = career_field.strip()
 
             if career_field:
@@ -277,13 +369,16 @@ def build_llm_prompt(
 
     prompt_payload = {
         "authoritative_ml_top_3": authoritative_top_3,
+
         "requester_role": guidance_context.get(
             "requester",
             {},
         ).get(
             "role"
         ),
+
         "grounded_context": grounded_context,
+
         "user_question": user_question,
     }
 
@@ -319,12 +414,16 @@ Eligibility terminology rules:
 
 - When discussing streams, subjects, entrance examinations, or eligibility,
   use the terminology supplied by the verified backend pathway knowledge.
+
 - Do not broaden, shorten, or paraphrase an eligibility requirement if doing
   so could change its meaning.
+
 - Do not describe a pathway as "fully accessible across all academic streams"
   when the backend states that institution-specific requirements may apply.
+
 - Do not state that a student is eligible unless the backend explicitly
   establishes that eligibility.
+
 - When the student's allocated stream or actual eligibility is unavailable,
   describe it as pending or unknown.
 
@@ -344,14 +443,15 @@ USER QUESTION:
 BACKEND CONTEXT:
 
 {serialized_context}
-
 """
+
 
 # =========================================================
 # NORMALIZATION
 # =========================================================
 
 def _normalize_text(value: Any) -> str:
+
     if value is None:
         return ""
 
@@ -373,8 +473,10 @@ def _build_grounded_pathway_index(
     Build:
 
         normalized career field
-            -> pathway grounding information
+            ->
+        pathway grounding information
     """
+
     index: Dict[str, Dict[str, Any]] = {}
 
     ml_profile = grounded_context.get(
@@ -388,7 +490,9 @@ def _build_grounded_pathway_index(
     )
 
     if isinstance(top_3, list):
+
         for item in top_3:
+
             if not isinstance(item, dict):
                 continue
 
@@ -407,6 +511,7 @@ def _build_grounded_pathway_index(
                     dict,
                 )
             ):
+
                 index[
                     _normalize_text(career_field)
                 ] = pathway_grounding
@@ -417,6 +522,7 @@ def _build_grounded_pathway_index(
     )
 
     if isinstance(stated_interest, dict):
+
         interest_name = stated_interest.get(
             "stated_interest"
         )
@@ -425,7 +531,11 @@ def _build_grounded_pathway_index(
             "pathway_grounding"
         )
 
-        if isinstance(pathway_grounding, dict):
+        if isinstance(
+            pathway_grounding,
+            dict,
+        ):
+
             grounded_name = (
                 pathway_grounding.get(
                     "career_field"
@@ -437,6 +547,7 @@ def _build_grounded_pathway_index(
                 grounded_name,
                 str,
             ):
+
                 index[
                     _normalize_text(
                         grounded_name
@@ -481,6 +592,10 @@ UNCERTAINTY_MARKERS = {
     "not verified",
     "unverified",
     "cannot confirm",
+    "can't confirm",
+    "do not have verified",
+    "don't have verified",
+    "does not have verified",
     "not confirmed in the backend",
     "not available in the backend",
     "not documented",
@@ -495,23 +610,44 @@ UNCERTAINTY_MARKERS = {
     "verify official",
     "official verification required",
     "requires official verification",
+    "not enough information",
+    "insufficient information",
+    "no verified",
+    "without verified",
 }
-
 
 # =========================================================
 # ASSERTION DETECTION
 # =========================================================
+
 
 def _term_is_present_as_assertion(
     text: str,
     term: str,
 ) -> bool:
     """
-    Returns True when a factual term appears to be asserted.
+    Returns True only when a factual term is actually asserted.
 
-    Returns False when the term is clearly surrounded by
-    uncertainty or explicit negation.
+    Returns False when the specific occurrence of the term is:
+    - explicitly negated
+    - marked as unknown/unverified
+    - framed as hypothetical
+    - described as unavailable
+    - followed/preceded by wording that clearly removes the claim
+
+    Important:
+    Uncertainty elsewhere in the same sentence must NOT cancel
+    an unrelated factual assertion.
+
+    Example:
+
+        "Humanities subjects may be useful. No verified pathway
+        details are available."
+
+    The "No verified pathway details..." statement does NOT make
+    the earlier "Humanities subjects may be useful" claim safe.
     """
+
     normalized_text = _normalize_text(text)
     normalized_term = _normalize_text(term)
 
@@ -522,46 +658,180 @@ def _term_is_present_as_assertion(
     ):
         return False
 
-    clauses = re.split(
-        r"[.!?;\n]+",
-        normalized_text,
+    # ---------------------------------------------------------
+    # Find every occurrence of the risky term.
+    # ---------------------------------------------------------
+
+    occurrence_pattern = re.compile(
+        rf"\b{re.escape(normalized_term)}\b",
+        flags=re.IGNORECASE,
     )
 
-    for clause in clauses:
-        clause = clause.strip()
+    matches = list(
+        occurrence_pattern.finditer(
+            normalized_text
+        )
+    )
 
-        if normalized_term not in clause:
-            continue
+    if not matches:
+        return False
+
+    # ---------------------------------------------------------
+    # Examine each occurrence independently.
+    # ---------------------------------------------------------
+
+    for match in matches:
+
+        start = match.start()
+        end = match.end()
+
+        # Look at a limited local window around THIS occurrence.
+        # This prevents a later unrelated uncertainty statement
+        # from cancelling an earlier factual claim.
+        local_start = max(
+            0,
+            start - 100,
+        )
+
+        local_end = min(
+            len(normalized_text),
+            end + 140,
+        )
+
+        local_text = normalized_text[
+            local_start:local_end
+        ]
 
         # -----------------------------------------------------
-        # Uncertainty
-        # -----------------------------------------------------
-
-        for marker in UNCERTAINTY_MARKERS:
-            if marker in clause:
-                return False
-
-        # -----------------------------------------------------
-        # Explicit negation
+        # 1. Explicit negation / unavailable wording
         # -----------------------------------------------------
 
         negative_patterns = [
-            rf"\b{re.escape(normalized_term)}\b\s+not\s+required\b",
-            rf"\b{re.escape(normalized_term)}\b\s+not\s+confirmed\b",
-            rf"\b{re.escape(normalized_term)}\b\s+not\s+available\b",
-            rf"\b{re.escape(normalized_term)}\b\s+unknown\b",
-            rf"\bnot\s+{re.escape(normalized_term)}\b",
+
+            # humanities stream is not required
+            rf"\b{re.escape(normalized_term)}\b"
+            rf"\s+(?:is|are|was|were)\s+"
+            rf"(?:not|never)\b",
+
+            # humanities stream is unavailable
+            rf"\b{re.escape(normalized_term)}\b"
+            rf"\s+(?:is|are|was|were)\s+"
+            rf"(?:unavailable|unknown|uncertain)\b",
+
+            # not humanities stream
+            rf"\b(?:not|never)\s+"
+            rf"{re.escape(normalized_term)}\b",
+
+            # no humanities stream requirement
+            rf"\b(?:no|without)\s+"
+            rf"(?:verified\s+)?"
+            rf"{re.escape(normalized_term)}\b",
+
+            # cannot confirm humanities stream
+            rf"\b(?:cannot|can't|can\s+not|"
+            rf"do\s+not|don't|does\s+not|doesn't|"
+            rf"unable\s+to)\b"
+            rf".{{0,80}}?"
+            rf"\b{re.escape(normalized_term)}\b",
+
+            # whether humanities stream is required
+            rf"\b(?:whether|if)\b"
+            rf".{{0,80}}?"
+            rf"\b{re.escape(normalized_term)}\b"
+            rf".{{0,80}}?"
+            rf"\b(?:required|eligible|available|accepted)\b",
+
+            # check/verify humanities stream
+            rf"\b(?:check|verify|confirm|review)\b"
+            rf".{{0,80}}?"
+            rf"\b{re.escape(normalized_term)}\b",
         ]
 
+        explicitly_non_assertive = False
+
         for pattern in negative_patterns:
+
             if re.search(
                 pattern,
-                clause,
+                local_text,
+                flags=re.IGNORECASE,
             ):
-                return False
+                explicitly_non_assertive = True
+                break
+
+        if explicitly_non_assertive:
+            continue
 
         # -----------------------------------------------------
-        # Explicit backend verification
+        # 2. Uncertainty immediately associated with the term
+        # -----------------------------------------------------
+
+        local_uncertainty_patterns = [
+
+            rf"\b(?:unverified|unknown|uncertain|"
+            rf"unavailable|missing|pending|not\s+confirmed|"
+            rf"not\s+verified|not\s+provided|not\s+recorded)\b"
+            rf".{{0,60}}?"
+            rf"\b{re.escape(normalized_term)}\b",
+
+            rf"\b{re.escape(normalized_term)}\b"
+            rf".{{0,60}}?"
+            rf"\b(?:unverified|unknown|uncertain|"
+            rf"unavailable|missing|pending|not\s+confirmed|"
+            rf"not\s+verified|not\s+provided|not\s+recorded)\b",
+        ]
+
+        locally_uncertain = False
+
+        for pattern in local_uncertainty_patterns:
+
+            if re.search(
+                pattern,
+                local_text,
+                flags=re.IGNORECASE,
+            ):
+                locally_uncertain = True
+                break
+
+        if locally_uncertain:
+            continue
+
+        # -----------------------------------------------------
+        # 3. Hypothetical/example wording
+        # -----------------------------------------------------
+
+        hypothetical_patterns = [
+
+            rf"\b(?:if|whether|suppose|assuming)\b"
+            rf".{{0,80}}?"
+            rf"\b{re.escape(normalized_term)}\b",
+
+            rf"\b(?:for\s+example|for\s+instance)\b"
+            rf".{{0,80}}?"
+            rf"\b{re.escape(normalized_term)}\b",
+
+            rf"\b(?:such\s+as|e\.g\.)\b"
+            rf".{{0,80}}?"
+            rf"\b{re.escape(normalized_term)}\b",
+        ]
+
+        hypothetical = False
+
+        for pattern in hypothetical_patterns:
+
+            if re.search(
+                pattern,
+                local_text,
+                flags=re.IGNORECASE,
+            ):
+                hypothetical = True
+                break
+
+        if hypothetical:
+            continue
+
+        # -----------------------------------------------------
+        # 4. Explicit verification
         # -----------------------------------------------------
 
         verification_markers = [
@@ -573,11 +843,17 @@ def _term_is_present_as_assertion(
         ]
 
         for marker in verification_markers:
-            if marker in clause:
+
+            if marker in local_text:
                 return True
+
+        # -----------------------------------------------------
+        # 5. This occurrence is an actual assertion.
+        # -----------------------------------------------------
 
         return True
 
+    # All occurrences were non-assertive.
     return False
 
 
@@ -595,6 +871,7 @@ def _split_into_claim_units(
     not allow facts belonging to Software Engineering to be
     incorrectly attributed to Journalism.
     """
+
     if not isinstance(
         text,
         str,
@@ -617,34 +894,24 @@ def _split_into_claim_units(
 # EXAM CLAIM DETECTION
 # =========================================================
 
-# Phrases which clearly indicate that the model is making
-# a factual statement about an entrance/qualifying exam.
-#
-# Examples:
-#
-#   "The pathway requires CAT examination."
-#   "Prepare for NEET as the required entrance exam."
-#   "The route requires JEE Main examination."
-#
-# We validate the extracted exam name against the dedicated
-# verified entrance-exam set below.
-
 EXAM_CLAIM_PATTERNS = [
+
     re.compile(
         r"\b(?:requires?|required|needs?|mandatory)"
-        r"\s+(?:the\s+)?"
+        r"\s*(?:the\s+)?"
         r"([A-Za-z][A-Za-z0-9&.\-]*(?:\s+[A-Za-z][A-Za-z0-9&.\-]*){0,4})"
-        r"\s+(?:entrance\s+)?"
+        r"\s*(?:entrance\s+)?"
         r"(?:exam|examination)\b",
         flags=re.IGNORECASE,
     ),
+
     re.compile(
         r"\b(?:prepare\s+for|appear\s+for|take|qualify\s+in)"
-        r"\s+(?:the\s+)?"
+        r"\s*(?:the\s+)?"
         r"([A-Za-z][A-Za-z0-9&.\-]*(?:\s+[A-Za-z][A-Za-z0-9&.\-]*){0,4})"
-        r"\s+(?:as\s+)?"
+        r"\s*(?:as\s+)?"
         r"(?:the\s+)?"
-        r"(?:required|mandatory|qualifying)?\s*"
+        r"(?:required\s+|mandatory\s+|qualifying\s+)?"
         r"(?:entrance\s+)?"
         r"(?:exam|examination)\b",
         flags=re.IGNORECASE,
@@ -672,6 +939,7 @@ def _clean_exam_candidate(
     """
     Clean an extracted exam candidate.
     """
+
     candidate = candidate.strip(
         " .,;:()[]{}"
     )
@@ -681,6 +949,7 @@ def _clean_exam_candidate(
     cleaned_words: List[str] = []
 
     for word in words:
+
         normalized_word = word.strip(
             ".,;:()[]{}"
         ).lower()
@@ -706,6 +975,7 @@ def _extract_exam_claims(
     Extract likely entrance-exam names from explicit factual
     examination claims.
     """
+
     if not isinstance(
         text,
         str,
@@ -715,7 +985,9 @@ def _extract_exam_claims(
     claims: List[str] = []
 
     for pattern in EXAM_CLAIM_PATTERNS:
+
         for match in pattern.finditer(text):
+
             candidate = _clean_exam_candidate(
                 match.group(1)
             )
@@ -730,15 +1002,13 @@ def _extract_exam_claims(
     #
     # "Prepare for NEET as the required entrance exam."
     #
-    # This is intentionally separate because words such as
-    # "as the required" occur between the exam and "exam".
     # ---------------------------------------------------------
 
     contextual_pattern = re.compile(
         r"\b(?:prepare\s+for|appear\s+for|take|qualify\s+in)"
-        r"\s+(?:the\s+)?"
+        r"\s*(?:the\s+)?"
         r"([A-Za-z][A-Za-z0-9&.\-]{1,30})"
-        r"\s+"
+        r"\s*"
         r"(?:as\s+)?"
         r"(?:the\s+)?"
         r"(?:required\s+|mandatory\s+|qualifying\s+)?"
@@ -748,6 +1018,7 @@ def _extract_exam_claims(
     )
 
     for match in contextual_pattern.finditer(text):
+
         candidate = _clean_exam_candidate(
             match.group(1)
         )
@@ -765,6 +1036,7 @@ def _extract_exam_claims(
     seen: Set[str] = set()
 
     for claim in claims:
+
         normalized = _normalize_text(
             claim
         )
@@ -792,20 +1064,8 @@ def _collect_verified_exam_names(
     """
     Collect ONLY explicit entrance-exam names from verified
     backend pathway knowledge.
-
-    This is deliberately separate from _collect_verified_terms().
-
-    A generic pathway sentence must never accidentally make an
-    arbitrary exam appear verified.
-
-    Example:
-
-        backend entrance_exams:
-            [{"name": "JEE Main"}]
-
-        verified exam names:
-            {"jee main"}
     """
+
     verified_exam_names: Set[str] = set()
 
     pathway_index = _build_grounded_pathway_index(
@@ -813,6 +1073,7 @@ def _collect_verified_exam_names(
     )
 
     for pathway in pathway_index.values():
+
         if not isinstance(
             pathway,
             dict,
@@ -836,6 +1097,7 @@ def _collect_verified_exam_names(
             continue
 
         for exam in entrance_exams:
+
             if not isinstance(
                 exam,
                 dict,
@@ -846,10 +1108,10 @@ def _collect_verified_exam_names(
                 "name"
             )
 
-            if isinstance(
-                name,
-                str,
-            ) and name.strip():
+            if (
+                isinstance(name, str)
+                and name.strip()
+            ):
 
                 verified_exam_names.add(
                     _normalize_text(name)
@@ -863,15 +1125,9 @@ def _exam_claim_is_verified(
     verified_exam_names: Set[str],
 ) -> bool:
     """
-    Exact normalized match against the explicitly verified
-    entrance-exam names.
-
-    Examples:
-
-        JEE Main -> True
-        CAT      -> False
-        NEET     -> False
+    Exact normalized match against explicitly verified exams.
     """
+
     normalized_exam = _normalize_text(
         exam_name
     )
@@ -888,21 +1144,24 @@ def _validate_exam_claims(
     context_label: str,
 ) -> None:
     """
-    Reject explicit exam claims that are not present in the
-    verified backend entrance-exam data.
+    Reject explicit exam claims not present in verified backend
+    entrance-exam data.
     """
+
     exam_claims = _extract_exam_claims(
         text
     )
 
     for exam_name in exam_claims:
+
         if not _exam_claim_is_verified(
             exam_name,
             verified_exam_names,
         ):
+
             raise RuntimeError(
                 (
-                    "Gemini used an unverified entrance-exam claim "
+                    "LLM used an unverified entrance-exam claim "
                     f"('{exam_name}') {context_label}."
                 )
             )
@@ -916,9 +1175,10 @@ def _collect_verified_terms(
     grounded_context: Dict[str, Any],
 ) -> Set[str]:
     """
-    Collect specific factual terms that are explicitly represented
+    Collect specific factual terms explicitly represented
     by verified backend pathway knowledge.
     """
+
     verified_terms: Set[str] = set()
 
     pathway_index = _build_grounded_pathway_index(
@@ -926,6 +1186,7 @@ def _collect_verified_terms(
     )
 
     for pathway in pathway_index.values():
+
         if not isinstance(
             pathway,
             dict,
@@ -945,10 +1206,12 @@ def _collect_verified_terms(
             "accepted_streams",
             [],
         ) or []:
+
             if isinstance(
                 stream,
                 str,
             ):
+
                 verified_terms.add(
                     _normalize_text(stream)
                 )
@@ -961,10 +1224,12 @@ def _collect_verified_terms(
             "required_subjects",
             [],
         ) or []:
+
             if isinstance(
                 subject,
                 str,
             ):
+
                 normalized_subject = _normalize_text(
                     subject
                 )
@@ -981,6 +1246,7 @@ def _collect_verified_terms(
             "entrance_exams",
             [],
         ) or []:
+
             if not isinstance(
                 exam,
                 dict,
@@ -995,6 +1261,7 @@ def _collect_verified_terms(
                 name,
                 str,
             ):
+
                 verified_terms.add(
                     _normalize_text(name)
                 )
@@ -1007,6 +1274,7 @@ def _collect_verified_terms(
             "admission_routes",
             [],
         ) or []:
+
             if not isinstance(
                 route,
                 dict,
@@ -1025,30 +1293,22 @@ def _collect_verified_terms(
                 route_name,
                 str,
             ):
+
                 normalized_route = _normalize_text(
                     route_name
                 )
 
-                # Preserve complete route.
                 verified_terms.add(
                     normalized_route
                 )
 
-                # Example:
-                #
-                # JEE Main → JoSAA/CSAB
-                #
-                # becomes:
-                #
-                # JEE Main
-                # JoSAA
-                # CSAB
                 parts = re.split(
                     r"(?:→|->|/|,|;|\||:|\(|\)|\[|\])",
                     normalized_route,
                 )
 
                 for part in parts:
+
                     part = _normalize_text(
                         part
                     )
@@ -1062,6 +1322,7 @@ def _collect_verified_terms(
                 route_details,
                 str,
             ):
+
                 normalized_details = _normalize_text(
                     route_details
                 )
@@ -1083,13 +1344,16 @@ def _collect_verified_terms(
             eligibility,
             dict,
         ):
+
             for value in eligibility.values():
 
                 if isinstance(
                     value,
                     list,
                 ):
+
                     for item in value:
+
                         if not isinstance(
                             item,
                             str,
@@ -1105,7 +1369,9 @@ def _collect_verified_terms(
                         )
 
                         for fact_term in HIGH_RISK_FACT_TERMS:
+
                             if fact_term in normalized_item:
+
                                 verified_terms.add(
                                     fact_term
                                 )
@@ -1114,6 +1380,7 @@ def _collect_verified_terms(
                     value,
                     str,
                 ):
+
                     normalized_value = _normalize_text(
                         value
                     )
@@ -1123,7 +1390,9 @@ def _collect_verified_terms(
                     )
 
                     for fact_term in HIGH_RISK_FACT_TERMS:
+
                         if fact_term in normalized_value:
+
                             verified_terms.add(
                                 fact_term
                             )
@@ -1136,6 +1405,7 @@ def _collect_verified_terms(
             "institutions",
             [],
         ) or []:
+
             if not isinstance(
                 institution,
                 dict,
@@ -1150,6 +1420,7 @@ def _collect_verified_terms(
                 name,
                 str,
             ):
+
                 verified_terms.add(
                     _normalize_text(name)
                 )
@@ -1162,6 +1433,7 @@ def _collect_verified_terms(
                 program,
                 str,
             ):
+
                 verified_terms.add(
                     _normalize_text(program)
                 )
@@ -1178,8 +1450,9 @@ def _validate_pathway_names(
     grounded_context: Dict[str, Any],
 ) -> None:
     """
-    Prevent Gemini from inventing unsupported pathway names.
+    Prevent the LLM from inventing unsupported pathway names.
     """
+
     pathway_index = _build_grounded_pathway_index(
         grounded_context
     )
@@ -1189,14 +1462,16 @@ def _validate_pathway_names(
     )
 
     for pathway in response.pathway_guidance:
+
         normalized_name = _normalize_text(
             pathway.career_field
         )
 
         if normalized_name not in known_pathways:
+
             raise RuntimeError(
                 (
-                    "Gemini introduced an unsupported pathway "
+                    "LLM introduced an unsupported pathway "
                     f"'{pathway.career_field}'."
                 )
             )
@@ -1211,12 +1486,10 @@ def _validate_missing_pathway_claims(
     grounded_context: Dict[str, Any],
 ) -> None:
     """
-    Validate pathway_guidance entries whose backend knowledge is
-    missing or unverified.
-
-    The validation is deliberately local to the pathway's own
-    generated text.
+    Validate pathway entries whose backend knowledge is missing
+    or unverified.
     """
+
     pathway_index = _build_grounded_pathway_index(
         grounded_context
     )
@@ -1230,6 +1503,7 @@ def _validate_missing_pathway_claims(
     )
 
     for pathway in response.pathway_guidance:
+
         career_field = pathway.career_field
 
         grounding = pathway_index.get(
@@ -1266,17 +1540,22 @@ def _validate_missing_pathway_claims(
         # -----------------------------------------------------
 
         for term in HIGH_RISK_FACT_TERMS:
-            if _term_is_present_as_assertion(
+
+            if not _term_is_present_as_assertion(
                 normalized_pathway_text,
                 term,
             ):
-                raise RuntimeError(
-                    (
-                        "Gemini used an unsupported factual claim "
-                        f"('{term}') for '{career_field}', which has "
-                        f"verification_status='{status}'."
-                    )
+                continue
+
+            raise RuntimeError(
+                (
+                    "LLM used an unsupported factual claim "
+                    f"('{term}') for '{career_field}', which has "
+                    f"verification_status='{status}'. "
+                    "Missing/unverified pathways must not contain "
+                    "specific education facts."
                 )
+            )
 
         # -----------------------------------------------------
         # Unknown entrance exam claims
@@ -1293,8 +1572,6 @@ def _validate_missing_pathway_claims(
 
         # -----------------------------------------------------
         # Generic eligibility/admission language
-        #
-        # This is allowed only when uncertainty is clearly stated.
         # -----------------------------------------------------
 
         risky_general_terms = {
@@ -1312,19 +1589,30 @@ def _validate_missing_pathway_claims(
         )
 
         if mentions_general_terms:
+
             has_uncertainty = any(
                 marker in normalized_pathway_text
                 for marker in UNCERTAINTY_MARKERS
             )
 
-            if not has_uncertainty:
-                raise RuntimeError(
-                    (
-                        "Gemini discussed eligibility/admission "
-                        f"information for '{career_field}' without "
-                        "providing the required uncertainty marker."
-                    )
+            # Explicit uncertainty/absence wording is acceptable.
+           #
+            # Examples:
+            # "eligibility information is unavailable"
+            # "I cannot confirm admission requirements"
+            # "no verified admission information is available"
+            #
+            # The LLM is not asserting an eligibility fact in these cases.
+            if has_uncertainty:
+                continue
+
+            raise RuntimeError(
+                (
+                    "LLM discussed eligibility/admission "
+                    f"information for '{career_field}' without "
+                    "providing the required uncertainty marker."
                 )
+            )
 
 
 # =========================================================
@@ -1339,6 +1627,7 @@ def _validate_verified_pathway_claims(
     Ensure specific high-risk facts used inside each verified
     pathway actually exist in verified backend knowledge.
     """
+
     pathway_index = _build_grounded_pathway_index(
         grounded_context
     )
@@ -1352,6 +1641,7 @@ def _validate_verified_pathway_claims(
     )
 
     for pathway in response.pathway_guidance:
+
         career_field = pathway.career_field
 
         grounding = pathway_index.get(
@@ -1379,17 +1669,19 @@ def _validate_verified_pathway_claims(
         # -----------------------------------------------------
 
         for term in HIGH_RISK_FACT_TERMS:
+
             if not _term_is_present_as_assertion(
                 pathway_text,
                 term,
             ):
                 continue
 
-            # Maths / Mathematics equivalence.
+            # Mathematics / Maths equivalence
             if term in {
                 "mathematics",
                 "maths",
             }:
+
                 if verified_terms.intersection(
                     {
                         "mathematics",
@@ -1399,9 +1691,10 @@ def _validate_verified_pathway_claims(
                     continue
 
             if term not in verified_terms:
+
                 raise RuntimeError(
                     (
-                        "Gemini used an education/admission fact "
+                        "LLM used an education/admission fact "
                         f"('{term}') for '{career_field}' that is "
                         "not explicitly represented in the verified "
                         "backend pathway knowledge."
@@ -1418,9 +1711,8 @@ def _validate_verified_pathway_claims(
             f"for verified pathway '{career_field}'",
         )
 
-
 # =========================================================
-# ALL GENERATED TEXT VALIDATION
+# VERIFIED PATHWAY VALIDATION
 # =========================================================
 
 def _validate_all_generated_text_claims(
@@ -1428,16 +1720,12 @@ def _validate_all_generated_text_claims(
     grounded_context: Dict[str, Any],
 ) -> None:
     """
-    Validate factual claims across ALL user-facing Gemini fields.
+    Validate factual claims across all generated fields.
 
-    Important:
-
-    This function does NOT globally associate every fact in the
-    response with every career field.
-
-    Pathway-specific validation is performed only on claim units
-    that actually mention the relevant pathway.
+    Pathway-specific validation is local to claim units that
+    actually mention the relevant pathway.
     """
+
     generated_sections: List[str] = [
         response.student_summary,
         response.case_explanation,
@@ -1480,9 +1768,6 @@ def _validate_all_generated_text_claims(
 
     # ---------------------------------------------------------
     # Pathway-local validation across every generated section.
-    #
-    # If a sentence mentions Journalism, only facts in that
-    # sentence are checked against Journalism's grounding.
     # ---------------------------------------------------------
 
     claim_units = _split_into_claim_units(
@@ -1490,6 +1775,7 @@ def _validate_all_generated_text_claims(
     )
 
     for career_field, pathway_data in pathway_index.items():
+
         status = pathway_data.get(
             "verification_status"
         )
@@ -1501,6 +1787,7 @@ def _validate_all_generated_text_claims(
             continue
 
         for claim in claim_units:
+
             normalized_claim = _normalize_text(
                 claim
             )
@@ -1513,17 +1800,51 @@ def _validate_all_generated_text_claims(
             # -------------------------------------------------
 
             for term in HIGH_RISK_FACT_TERMS:
-                if _term_is_present_as_assertion(
+
+                # Ignore mentions that are clearly uncertainty,
+                # negation, hypothetical examples, or absence
+                # statements.
+                if not _term_is_present_as_assertion(
                     claim,
                     term,
                 ):
-                    raise RuntimeError(
-                        (
-                            "Gemini used an unsupported factual "
-                            f"claim ('{term}') for '{career_field}', "
-                            f"which has verification_status='{status}'."
-                        )
+                    continue
+
+                # -------------------------------------------------
+                # Mathematics / Maths equivalence
+                # -------------------------------------------------
+
+                if term in {
+                    "mathematics",
+                    "maths",
+                }:
+                    if verified_terms.intersection(
+                        {
+                            "mathematics",
+                            "maths",
+                        }
+                    ):
+                        continue
+
+                # -------------------------------------------------
+                # Exact verified term
+                # -------------------------------------------------
+
+                if term in verified_terms:
+                    continue
+
+                # -------------------------------------------------
+                # Do not allow an unverified high-risk fact.
+                # -------------------------------------------------
+
+                raise RuntimeError(
+                    (
+                        "LLM used a high-risk factual term "
+                        f"('{term}') for '{career_field}' "
+                        "that is not explicitly represented "
+                        "in verified backend pathway knowledge."
                     )
+                )
 
             # -------------------------------------------------
             # Unknown entrance exams
@@ -1557,33 +1878,26 @@ def _validate_all_generated_text_claims(
             )
 
             if mentions_generic_term:
+
                 has_uncertainty = any(
                     marker in normalized_claim
                     for marker in UNCERTAINTY_MARKERS
                 )
 
-                if not has_uncertainty:
-                    raise RuntimeError(
-                        (
-                            "Gemini discussed eligibility/admission "
-                            f"information for '{career_field}' "
-                            "without providing the required "
-                            "uncertainty marker."
-                        )
+                if has_uncertainty:
+                    continue
+
+                raise RuntimeError(
+                    (
+                        "LLM discussed eligibility/admission "
+                        f"information for '{career_field}' "
+                        "without providing the required "
+                        "uncertainty marker."
                     )
+                )
 
     # ---------------------------------------------------------
     # Global specific-fact protection.
-    #
-    # This protects against a sentence making a specific claim
-    # without naming the pathway at all.
-    #
-    # Example:
-    #
-    #   "JEE Main is required."
-    #
-    # It is allowed only if JEE Main exists in verified backend
-    # knowledge.
     # ---------------------------------------------------------
 
     for claim in claim_units:
@@ -1593,17 +1907,24 @@ def _validate_all_generated_text_claims(
         # -----------------------------------------------------
 
         for term in HIGH_RISK_FACT_TERMS:
+
+            # Ignore uncertainty, negation, hypothetical,
+            # or explicit absence statements.
             if not _term_is_present_as_assertion(
                 claim,
                 term,
             ):
                 continue
 
-            # Maths / Mathematics equivalence.
+            # -------------------------------------------------
+            # Mathematics / Maths equivalence
+            # -------------------------------------------------
+
             if term in {
                 "mathematics",
                 "maths",
             }:
+
                 if verified_terms.intersection(
                     {
                         "mathematics",
@@ -1612,15 +1933,25 @@ def _validate_all_generated_text_claims(
                 ):
                     continue
 
-            if term not in verified_terms:
-                raise RuntimeError(
-                    (
-                        "Gemini used a high-risk factual term "
-                        f"('{term}') that is not explicitly "
-                        "represented in verified backend pathway "
-                        "knowledge."
-                    )
+            # -------------------------------------------------
+            # Exact verified term
+            # -------------------------------------------------
+
+            if term in verified_terms:
+                continue
+
+            # -------------------------------------------------
+            # Reject unsupported factual terms.
+            # -------------------------------------------------
+
+            raise RuntimeError(
+                (
+                    "LLM used a high-risk factual term "
+                    f"('{term}') that is not explicitly "
+                    "represented in verified backend pathway "
+                    "knowledge."
                 )
+            )
 
         # -----------------------------------------------------
         # Unknown / unverified entrance exams
@@ -1631,7 +1962,6 @@ def _validate_all_generated_text_claims(
             verified_exam_names,
             "in generated guidance",
         )
-
 
 # =========================================================
 # RESPONSE VALIDATION
@@ -1644,6 +1974,7 @@ def validate_guidance_response(
     """
     Execute the complete guardrail pipeline.
     """
+
     grounded_context = build_grounded_context(
         guidance_context
     )
@@ -1688,6 +2019,55 @@ def validate_guidance_response(
 
 
 # =========================================================
+# LLM RESPONSE PARSER
+# =========================================================
+
+async def _parse_guidance_response(
+    raw_text: Optional[str],
+    provider_name: str,
+) -> GuidanceResponse:
+    """
+    Parse and validate structured LLM JSON output.
+    """
+
+    if not raw_text:
+
+        raise RuntimeError(
+            f"{provider_name} returned no textual guidance response."
+        )
+
+    try:
+
+        parsed = json.loads(
+            raw_text
+        )
+
+    except json.JSONDecodeError as exc:
+
+        raise RuntimeError(
+            (
+                f"{provider_name} returned invalid JSON for the "
+                f"GuidanceResponse schema: {exc}"
+            )
+        ) from exc
+
+    try:
+
+        return GuidanceResponse.model_validate(
+            parsed
+        )
+
+    except Exception as exc:
+
+        raise RuntimeError(
+            (
+                f"{provider_name} response did not match the "
+                f"GuidanceResponse schema: {exc}"
+            )
+        ) from exc
+
+
+# =========================================================
 # GEMINI CALL
 # =========================================================
 
@@ -1698,9 +2078,17 @@ async def _call_gemini(
     Call Gemini and request structured JSON output.
     """
 
+    if gemini_client is None:
+
+        raise RuntimeError(
+            "Gemini client is not configured."
+        )
+
     def _sync_call():
-        return client.models.generate_content(
+
+        return gemini_client.models.generate_content(
             model=GEMINI_MODEL,
+
             contents=[
                 {
                     "role": "user",
@@ -1715,6 +2103,7 @@ async def _call_gemini(
                     ],
                 }
             ],
+
             config={
                 "response_mime_type": "application/json",
                 "response_schema": GuidanceResponse,
@@ -1722,15 +2111,19 @@ async def _call_gemini(
         )
 
     try:
+
         response = await asyncio.to_thread(
             _sync_call
         )
+
     except Exception as exc:
+
         raise RuntimeError(
             f"Gemini request failed: {exc}"
         ) from exc
 
     if response is None:
+
         raise RuntimeError(
             "Gemini returned an empty response."
         )
@@ -1741,68 +2134,180 @@ async def _call_gemini(
         None,
     )
 
-    if not raw_text:
-        raise RuntimeError(
-            "Gemini returned no textual guidance response."
-        )
-
-    try:
-        parsed = json.loads(
-            raw_text
-        )
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(
-            (
-                "Gemini returned invalid JSON for the "
-                f"GuidanceResponse schema: {exc}"
-            )
-        ) from exc
-
-    try:
-        return GuidanceResponse.model_validate(
-            parsed
-        )
-    except Exception as exc:
-        raise RuntimeError(
-            (
-                "Gemini response did not match the "
-                f"GuidanceResponse schema: {exc}"
-            )
-        ) from exc
+    return await _parse_guidance_response(
+        raw_text=raw_text,
+        provider_name="Gemini",
+    )
 
 
 # =========================================================
-# MAIN GENERATOR
+# GROQ CALL
+# =========================================================
+
+async def _call_groq(
+    prompt: str,
+) -> GuidanceResponse:
+    """
+    Call Groq and request JSON Schema structured output.
+
+    The currently configured model is expected to support
+    JSON Schema output.
+    """
+
+    if groq_client is None:
+
+        raise RuntimeError(
+            "Groq client is not configured."
+        )
+
+    response_schema = (
+        GuidanceResponse.model_json_schema()
+    )
+
+    def _sync_call():
+
+        return groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+
+            messages=[
+                {
+                    "role": "system",
+                    "content": GUIDANCE_SYSTEM_PROMPT,
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+
+            response_format={
+                "type": "json_schema",
+
+                "json_schema": {
+                    "name": "guidance_response",
+                    "schema": response_schema,
+                },
+            },
+        )
+
+    try:
+
+        response = await asyncio.to_thread(
+            _sync_call
+        )
+
+    except Exception as exc:
+
+        raise RuntimeError(
+            f"Groq request failed: {exc}"
+        ) from exc
+
+    if response is None:
+
+        raise RuntimeError(
+            "Groq returned an empty response."
+        )
+
+    choices = getattr(
+        response,
+        "choices",
+        None,
+    )
+
+    if not choices:
+
+        raise RuntimeError(
+            "Groq returned no choices."
+        )
+
+    message = getattr(
+        choices[0],
+        "message",
+        None,
+    )
+
+    if message is None:
+
+        raise RuntimeError(
+            "Groq returned no message."
+        )
+
+    raw_text = getattr(
+        message,
+        "content",
+        None,
+    )
+
+    return await _parse_guidance_response(
+        raw_text=raw_text,
+        provider_name="Groq",
+    )
+
+
+# =========================================================
+# LLM PROVIDER ROUTER
+# =========================================================
+
+async def _call_llm(
+    prompt: str,
+) -> GuidanceResponse:
+    """
+    Route the request to the configured LLM provider.
+    """
+
+    if LLM_PROVIDER == "gemini":
+
+        return await _call_gemini(
+            prompt
+        )
+
+    if LLM_PROVIDER == "groq":
+
+        return await _call_groq(
+            prompt
+        )
+
+    raise RuntimeError(
+        f"Unsupported LLM provider: {LLM_PROVIDER}"
+    )
+
+
+# =========================================================
+# PUBLIC GUIDANCE GENERATOR
 # =========================================================
 
 async def generate_guidance(
     guidance_context: Dict[str, Any],
     user_question: Optional[str] = None,
-) -> Dict[str, Any]:
+) -> GuidanceResponse:
     """
-    Main Phase 6 Guidance Agent.
+    Main Guidance Agent entry point.
 
     Flow:
 
-        authoritative backend context
-                    ↓
-              grounding layer
-                    ↓
-                  Gemini
-                    ↓
-             Pydantic validation
-                    ↓
-               guardrails
-                    ↓
-        authoritative ML Top-3 reattached
+        Backend Context
+            ->
+        Grounded Prompt
+            ->
+        Configured LLM Provider
+            ->
+        Pydantic Response Validation
+            ->
+        Guidance Guardrails
+            ->
+        Final Response
+
+    The LLM does not modify the authoritative ML result.
     """
 
     # ---------------------------------------------------------
-    # Capture authoritative ML Top-3 BEFORE Gemini.
+    # Capture authoritative ML Top-3 BEFORE the LLM call.
     # ---------------------------------------------------------
 
-    authoritative_top_3 = extract_authoritative_top_3(
-        guidance_context
+    authoritative_top_3 = (
+        extract_authoritative_top_3(
+            guidance_context
+        )
     )
 
     # ---------------------------------------------------------
@@ -1815,42 +2320,45 @@ async def generate_guidance(
     )
 
     # ---------------------------------------------------------
-    # Gemini generation.
+    # Call the selected provider.
+    #
+    # LLM_PROVIDER=gemini -> Gemini
+    # LLM_PROVIDER=groq   -> Groq
     # ---------------------------------------------------------
 
-    response = await _call_gemini(
+    response = await _call_llm(
         prompt
     )
 
     # ---------------------------------------------------------
-    # Guardrail validation.
+    # Run complete guardrail pipeline.
     # ---------------------------------------------------------
 
-    validated_response = validate_guidance_response(
+    response = validate_guidance_response(
         response=response,
         guidance_context=guidance_context,
     )
 
     # ---------------------------------------------------------
-    # Convert to dictionary.
-    # ---------------------------------------------------------
-
-    result = validated_response.model_dump()
-
-    # ---------------------------------------------------------
-    # Reattach ML Top-3 from backend.
+    # Final immutable ML check.
     #
-    # Gemini NEVER becomes the source of truth for this.
+    # Re-read the authoritative backend context and make sure
+    # the ML Top-3 is exactly the same as before the LLM call.
     # ---------------------------------------------------------
 
-    result["ml_top_3"] = authoritative_top_3
-
-    # ---------------------------------------------------------
-    # Attach grounded context.
-    # ---------------------------------------------------------
-
-    result["grounding"] = build_grounded_context(
+    final_top_3 = extract_authoritative_top_3(
         guidance_context
     )
 
-    return result
+    if final_top_3 != authoritative_top_3:
+
+        raise RuntimeError(
+            "Authoritative ML Top-3 changed during guidance generation."
+        )
+
+    # ---------------------------------------------------------
+    # Final return.
+    # ---------------------------------------------------------
+
+    return response
+
