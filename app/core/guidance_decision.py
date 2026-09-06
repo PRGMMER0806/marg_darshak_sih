@@ -82,7 +82,9 @@ def _as_list(value: Any) -> List[str]:
 # PATHWAY HELPERS
 # =========================================================
 
-def _get_pathway(career_field: Optional[str]) -> Optional[Dict[str, Any]]:
+def _get_pathway(
+    career_field: Optional[str],
+) -> Optional[Dict[str, Any]]:
     if not career_field:
         return None
 
@@ -133,9 +135,14 @@ def _find_interest_match(
         return None
 
     for recommendation in top_3:
-        career_field = recommendation.get("career_field")
+        career_field = recommendation.get(
+            "career_field"
+        )
 
-        if _same_pathway(stated_interest, career_field):
+        if _same_pathway(
+            stated_interest,
+            career_field,
+        ):
             return recommendation
 
     return None
@@ -159,7 +166,9 @@ def _stream_matches_requirement(
     if not allocated_stream:
         return False
 
-    allocated = _normalize_stream(allocated_stream)
+    allocated = _normalize_stream(
+        allocated_stream
+    )
 
     if not accepted_streams:
         return True
@@ -182,9 +191,10 @@ def _stream_matches_requirement(
                 return True
 
         # Mathematics-oriented science pathway
-        if "mathematics" in requirement or requirement in {
-            "science_with_mathematics",
-        }:
+        if (
+            "mathematics" in requirement
+            or requirement == "science_with_mathematics"
+        ):
             if allocated in {
                 "science_with_mathematics",
                 "science_with_pcmb",
@@ -239,7 +249,9 @@ def _is_stream_school_eligible(
     if not eligible_streams:
         return None
 
-    allocated = _normalize_stream(allocated_stream)
+    allocated = _normalize_stream(
+        allocated_stream
+    )
 
     normalized_eligible = {
         _normalize_stream(stream)
@@ -293,18 +305,26 @@ def _analyze_education_feasibility(
             ],
         }
 
-    allocated_stream = education_state.get("allocated_stream")
+    allocated_stream = education_state.get(
+        "allocated_stream"
+    )
 
     available_streams = _as_list(
-        education_state.get("available_streams")
+        education_state.get(
+            "available_streams"
+        )
     )
 
     eligible_streams = _as_list(
-        education_state.get("eligible_streams")
+        education_state.get(
+            "eligible_streams"
+        )
     )
 
     accepted_streams = _as_list(
-        pathway.get("accepted_streams")
+        pathway.get(
+            "accepted_streams"
+        )
     )
 
     result = {
@@ -369,12 +389,18 @@ def _analyze_education_feasibility(
     # Final status
     # -----------------------------------------------------
 
-    if stream_compatible is False or school_eligible is False:
+    if (
+        stream_compatible is False
+        or school_eligible is False
+    ):
         result["status"] = "constrained"
 
-    elif stream_compatible is True and (
-        school_eligible is True
-        or school_eligible is None
+    elif (
+        stream_compatible is True
+        and (
+            school_eligible is True
+            or school_eligible is None
+        )
     ):
         result["status"] = "feasible"
 
@@ -388,15 +414,59 @@ def _analyze_education_feasibility(
 # TOP-3 PATHWAY ANALYSIS
 # =========================================================
 
+def _get_recommendation_match_score(
+    recommendation: Dict[str, Any],
+) -> Optional[float]:
+    """
+    Read the existing recommendation score without changing
+    the ML result.
+
+    Current guidance_agent.py stores the score as
+    `match_score`, while older recommendation structures may
+    use `match_confidence_pct` or `confidence_pct`.
+
+    Priority:
+        match_confidence_pct
+        confidence_pct
+        match_score
+    """
+
+    raw_score = recommendation.get(
+        "match_confidence_pct"
+    )
+
+    if raw_score is None:
+        raw_score = recommendation.get(
+            "confidence_pct"
+        )
+
+    if raw_score is None:
+        raw_score = recommendation.get(
+            "match_score"
+        )
+
+    if raw_score is None:
+        return None
+
+    try:
+        return float(raw_score)
+    except (TypeError, ValueError):
+        return None
+
+
 def _analyze_ml_pathway(
     recommendation: Dict[str, Any],
     education_state: Optional[Dict[str, Any]],
     stated_interest: Optional[str],
 ) -> Dict[str, Any]:
 
-    career_field = recommendation.get("career_field")
+    career_field = recommendation.get(
+        "career_field"
+    )
 
-    pathway = _get_pathway(career_field)
+    pathway = _get_pathway(
+        career_field
+    )
 
     education_analysis = _analyze_education_feasibility(
         pathway,
@@ -408,13 +478,24 @@ def _analyze_ml_pathway(
         career_field,
     )
 
+    match_score = _get_recommendation_match_score(
+        recommendation
+    )
+
     result = {
-        "rank": recommendation.get("rank"),
-        "career_field": career_field,
-        "match_confidence_pct": recommendation.get(
-            "match_confidence_pct"
+        "rank": recommendation.get(
+            "rank"
         ),
+
+        "career_field": career_field,
+
+        # FIX:
+        # Preserve the actual score coming from the
+        # recommendation object.
+        "match_confidence_pct": match_score,
+
         "interest_alignment": interest_match,
+
         "education_feasibility": education_analysis,
     }
 
@@ -440,17 +521,24 @@ def analyze_guidance_decision(
     # Normalize basic input
     # -----------------------------------------------------
 
-    if not isinstance(top_3, list):
+    if not isinstance(
+        top_3,
+        list,
+    ):
         top_3 = []
 
     top_3 = [
-        item for item in top_3
+        item
+        for item in top_3
         if isinstance(item, dict)
     ]
 
     clean_interest = (
         stated_interest.strip()
-        if isinstance(stated_interest, str)
+        if isinstance(
+            stated_interest,
+            str,
+        )
         and stated_interest.strip()
         else None
     )
@@ -481,7 +569,9 @@ def analyze_guidance_decision(
     )
 
     interest_pathway = (
-        _get_pathway(clean_interest)
+        _get_pathway(
+            clean_interest
+        )
         if clean_interest
         else None
     )
@@ -500,28 +590,43 @@ def analyze_guidance_decision(
 
         return {
             "case": "case_3",
-            "case_label": "stated_interest_outside_top_3",
+
+            "case_label": (
+                "stated_interest_outside_top_3"
+            ),
+
             "decision_summary": (
                 "The student has expressed interest in a pathway "
                 "that is not currently present in the ML Top 3."
             ),
+
             "ml_top_3_unchanged": True,
+
             "stated_interest": clean_interest,
+
             "stated_interest_pathway_available": (
                 interest_pathway is not None
             ),
+
             "stated_interest_education_feasibility": (
                 interest_education
             ),
+
             "interest_matches_ml_top_3": False,
+
             "top_3_analysis": pathway_analysis,
+
             "guidance_action": [
                 "Keep the ML Top 3 unchanged.",
+
                 "Record and respect the student's stated interest.",
+
                 "Explore the difference between the stated interest "
                 "and the assessment-derived directions.",
+
                 "Compare the stated pathway with current educational "
                 "constraints when official education data is available.",
+
                 "Suggest low-risk exploration before treating the "
                 "stated interest as a confirmed long-term direction.",
             ],
@@ -533,6 +638,7 @@ def analyze_guidance_decision(
     # -----------------------------------------------------
 
     if not clean_interest:
+
         active_recommendation = (
             top_3[0]
             if top_3
@@ -540,6 +646,7 @@ def analyze_guidance_decision(
         )
 
     else:
+
         # Interest is inside Top 3.
         # Use that pathway as the active discussion direction.
         active_recommendation = interest_match
@@ -549,20 +656,30 @@ def analyze_guidance_decision(
     # -----------------------------------------------------
 
     if not active_recommendation:
+
         return {
             "case": "insufficient_data",
-            "case_label": "insufficient_guidance_data",
+
+            "case_label": (
+                "insufficient_guidance_data"
+            ),
+
             "decision_summary": (
                 "There is not enough assessment data to determine "
                 "a guidance case."
             ),
+
             "ml_top_3_unchanged": True,
+
             "stated_interest": clean_interest,
+
             "interest_matches_ml_top_3": False,
+
             "top_3_analysis": pathway_analysis,
+
             "guidance_action": [
                 "Do not generate a strong career conclusion yet.",
-                "Wait for a completed assessment result."
+                "Wait for a completed assessment result.",
             ],
         }
 
@@ -574,7 +691,9 @@ def analyze_guidance_decision(
         (
             item
             for item in pathway_analysis
-            if item.get("career_field") == active_career
+            if item.get(
+                "career_field"
+            ) == active_career
         ),
         None,
     )
@@ -593,39 +712,66 @@ def analyze_guidance_decision(
     # -----------------------------------------------------
 
     if education_feasibility:
-        if education_feasibility.get("status") == "constrained":
+
+        if (
+            education_feasibility.get(
+                "status"
+            )
+            == "constrained"
+        ):
 
             return {
                 "case": "case_2",
-                "case_label": "education_or_eligibility_constraint",
+
+                "case_label": (
+                    "education_or_eligibility_constraint"
+                ),
+
                 "decision_summary": (
                     "The assessment-derived direction remains "
                     "relevant, but current educational constraints "
                     "create a feasibility conflict."
                 ),
+
                 "ml_top_3_unchanged": True,
+
                 "stated_interest": clean_interest,
+
                 "interest_matches_ml_top_3": (
                     interest_match is not None
                 ),
+
                 "active_pathway": active_career,
-                "active_pathway_rank": active_recommendation.get(
-                    "rank"
-                ),
-                "active_pathway_confidence_pct": (
+
+                "active_pathway_rank": (
                     active_recommendation.get(
-                        "match_confidence_pct"
+                        "rank"
                     )
                 ),
-                "education_feasibility": education_feasibility,
+
+                "active_pathway_confidence_pct": (
+                    _get_recommendation_match_score(
+                        active_recommendation
+                    )
+                ),
+
+                "education_feasibility": (
+                    education_feasibility
+                ),
+
                 "top_3_analysis": pathway_analysis,
+
                 "guidance_action": [
                     "Keep the ML Top 3 unchanged.",
+
                     "Explain the exact educational constraint.",
+
                     "Identify feasible pathways among the existing "
                     "ML directions where possible.",
+
                     "Do not automatically override the student's "
                     "allocated stream.",
+
                     "Do not proactively recommend changing schools "
                     "or streams unless the user asks about that option.",
                 ],
@@ -640,7 +786,10 @@ def analyze_guidance_decision(
     # -----------------------------------------------------
 
     if education_feasibility:
-        status = education_feasibility.get("status")
+
+        status = education_feasibility.get(
+            "status"
+        )
 
         if status in {
             "feasible",
@@ -650,35 +799,55 @@ def analyze_guidance_decision(
 
             return {
                 "case": "case_1",
-                "case_label": "aligned_or_direct_pathway",
+
+                "case_label": (
+                    "aligned_or_direct_pathway"
+                ),
+
                 "decision_summary": (
                     "The current assessment direction is aligned "
                     "with the student's stated interest or is the "
                     "strongest available ML direction, with no "
                     "confirmed educational conflict."
                 ),
+
                 "ml_top_3_unchanged": True,
+
                 "stated_interest": clean_interest,
+
                 "interest_matches_ml_top_3": (
                     interest_match is not None
                 ),
+
                 "active_pathway": active_career,
-                "active_pathway_rank": active_recommendation.get(
-                    "rank"
-                ),
-                "active_pathway_confidence_pct": (
+
+                "active_pathway_rank": (
                     active_recommendation.get(
-                        "match_confidence_pct"
+                        "rank"
                     )
                 ),
-                "education_feasibility": education_feasibility,
+
+                "active_pathway_confidence_pct": (
+                    _get_recommendation_match_score(
+                        active_recommendation
+                    )
+                ),
+
+                "education_feasibility": (
+                    education_feasibility
+                ),
+
                 "top_3_analysis": pathway_analysis,
+
                 "guidance_action": [
                     "Keep the ML Top 3 unchanged.",
+
                     "Explain why the active pathway fits the "
                     "assessment profile.",
+
                     "Use the education state to describe the "
                     "current direct route.",
+
                     "Provide concrete exploration and next steps.",
                 ],
             }
@@ -689,20 +858,30 @@ def analyze_guidance_decision(
 
     return {
         "case": "insufficient_data",
-        "case_label": "guidance_case_not_resolved",
+
+        "case_label": (
+            "guidance_case_not_resolved"
+        ),
+
         "decision_summary": (
             "The available guidance data does not yet support "
             "a reliable case classification."
         ),
+
         "ml_top_3_unchanged": True,
+
         "stated_interest": clean_interest,
+
         "interest_matches_ml_top_3": (
             interest_match is not None
         ),
+
         "top_3_analysis": pathway_analysis,
+
         "guidance_action": [
             "Do not invent missing educational facts.",
+
             "Wait for additional authoritative education context "
-            "or a future assessment."
+            "or a future assessment.",
         ],
     }
